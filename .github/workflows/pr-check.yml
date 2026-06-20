@@ -1,0 +1,35 @@
+name: pr-check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr-hygiene:
+    name: PR title and description
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title and body
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          types='feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert'
+          if ! printf '%s' "$PR_TITLE" | grep -Eq "^(${types})(\([a-z0-9._/-]+\))?!?: .+"; then
+            echo "::error::PR title must follow Conventional Commits, e.g. 'feat: ...' or 'fix(scope): ...'. Got: ${PR_TITLE}"
+            exit 1
+          fi
+          body_len=$(printf '%s' "${PR_BODY:-}" | tr -d '[:space:]' | wc -c)
+          if (( body_len < 20 )); then
+            echo "::error::PR description is too short (min 20 non-whitespace chars). Explain what changed and why."
+            exit 1
+          fi
+          echo "OK: PR title and description are valid."

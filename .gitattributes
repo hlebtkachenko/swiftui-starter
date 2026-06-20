@@ -1,0 +1,10 @@
+# Normalize line endings to LF on checkin; auto-detect text files.
+* text=auto eol=lf
+
+# Treat common binary asset types as binary (no diff, no EOL conversion).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.ico binary

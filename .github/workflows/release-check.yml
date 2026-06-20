@@ -1,0 +1,65 @@
+name: release-check
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-guard:
+    name: Validate and publish release tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Tag format and changelog entry
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$TAG" | grep -Eq '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'; then
+            echo "::error::Release tag '${TAG}' must match vX.Y.Z (no leading zeros)."
+            exit 1
+          fi
+          version="${TAG#v}"
+          ver_re="${version//./\\.}"
+          if ! grep -Eq "^## \[${ver_re}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [${version}]' entry. Promote [Unreleased] before tagging."
+            exit 1
+          fi
+          echo "OK: release tag ${TAG} is valid and present in the changelog."
+      - name: Publish GitHub release
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          # Extract the notes for this version: everything between its heading and
+          # the next. Match the heading as a literal string (index), not a regex,
+          # so awk -v does not mangle backslash escapes.
+          awk -v h="## [${version}]" '
+            index($0, h) == 1 { grab = 1; next }
+            grab && index($0, "## [") == 1 { exit }
+            grab { print }
+          ' CHANGELOG.md > notes.md
+          if ! grep -q '[^[:space:]]' notes.md; then
+            echo "::error::No changelog notes extracted for ${version}."
+            exit 1
+          fi
+          # Idempotent: never leave a tag without a published Release.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists; refreshing notes."
+            gh release edit "$TAG" --title "$TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" --verify-tag --title "$TAG" --notes-file notes.md
+          fi
+          echo "Published release ${TAG}."

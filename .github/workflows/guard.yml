@@ -1,0 +1,41 @@
+name: guard
+
+# A same-repo PR branch fires both `push` and `pull_request`; scoping `push` to
+# `main` means feature branches are checked once (via `pull_request`) and direct
+# pushes to `main` are still covered. No double runs.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  private-content:
+    name: Block secrets and private files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: No tracked secret or private files
+        run: bash .github/scripts/check-tracked.sh
+      - name: No private key material
+        run: bash .github/scripts/check-private-keys.sh
+      - name: No oversized files
+        run: bash .github/scripts/check-large-files.sh
+      - name: No personal data
+        env:
+          FORBIDDEN_STRINGS: ${{ secrets.FORBIDDEN_STRINGS }}
+        run: bash .github/scripts/check-personal-data.sh
+      - name: No dead links
+        run: bash .github/scripts/check-links.sh
+      - name: No duplicated docs
+        run: bash .github/scripts/check-duplication.sh
+      - name: Ownership map current
+        run: bash .github/scripts/check-ownership-map.sh

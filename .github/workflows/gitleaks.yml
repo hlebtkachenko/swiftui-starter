@@ -1,0 +1,30 @@
+name: gitleaks
+
+# A same-repo PR branch fires both `push` and `pull_request`; scoping `push` to
+# `main` means feature branches are scanned once (via `pull_request`) and direct
+# pushes to `main` are still covered. No double runs.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gitleaks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    name: Scan for secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history so every commit is scanned
+      - name: Run gitleaks (redacted; this repo and its logs are public)
+        run: |
+          VERSION=8.30.1
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks git --redact --no-banner --config .gitleaks.toml

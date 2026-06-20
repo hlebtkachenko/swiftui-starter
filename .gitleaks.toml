@@ -1,0 +1,7 @@
+title = "AppName gitleaks config"
+
+# Use the full built-in gitleaks ruleset. Add narrow allowlist entries below
+# ONLY for verified false positives, each with a justification comment.
+# Do not allowlist whole file types (including markdown): secrets in docs must fail too.
+[extend]
+useDefault = true

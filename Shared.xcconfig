@@ -1,0 +1,9 @@
+// Shared build configuration.
+// The signing team is provided out-of-band via the gitignored Secrets.xcconfig
+// (copy Secrets.xcconfig.example to Secrets.xcconfig and set DEVELOPMENT_TEAM),
+// keeping the Apple Developer Team ID out of this public repository.
+#include? "Secrets.xcconfig"
+
+// CloudKit sync needs the remote-notification background mode so
+// NSPersistentCloudKitContainer can receive push-driven changes.
+INFOPLIST_KEY_UIBackgroundModes = remote-notification

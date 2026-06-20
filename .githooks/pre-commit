@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Local pre-commit checks. Mirror the CI gates.
+# Enable once per clone with: git config core.hooksPath .githooks
+set -euo pipefail
+
+# 1) Block large staged files (5 MB).
+limit=$((5 * 1024 * 1024))
+big=0
+while IFS= read -r -d '' f; do
+  [[ -f "$f" ]] || continue
+  size=$(stat -f%z "$f" 2>/dev/null || stat -c%s "$f")
+  if (( size > limit )); then
+    echo "Blocked: $f exceeds 5 MB." >&2
+    big=1
+  fi
+done < <(git diff --cached --name-only -z)
+(( big == 0 )) || exit 1
+
+# 2) Secret scan (gitleaks).
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "gitleaks not installed (brew install gitleaks). CI still enforces the gate." >&2
+  exit 0
+fi
+gitleaks git --pre-commit --staged --redact --config .gitleaks.toml

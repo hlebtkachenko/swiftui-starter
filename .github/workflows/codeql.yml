@@ -1,0 +1,96 @@
+name: codeql
+
+# CodeQL's Swift extractor requires a full, tracer-wrapped build, and that build
+# is inherently slow (~17 min on a macOS runner) for a SwiftUI app. The cost is
+# the CodeQL tracer re-precompiling every imported system module (SwiftUI,
+# CloudKit, CoreData, ...) on every run; it is NOT our ~950 lines of code, which
+# compile in seconds. This was measured: the same build untraced takes 30 s, and
+# neither caching the precompiled modules nor pre-warming them before the traced
+# build helped (the tracer redoes the work regardless).
+#
+# It is a required merge gate (the `code_scanning` ruleset rule on `main`), so it
+# runs on every PR despite the cost: security scanning of real Swift code was
+# prioritized over merge speed (decision 2026-06-17). It also runs on push to
+# `main`, weekly, and on demand. The fast checks (gitleaks, guard, pr-check)
+# still gate too; this is the slow one. If the per-PR cost becomes a problem,
+# drop the `pull_request` trigger and the ruleset rule to return it to weekly +
+# on-demand only.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    name: Detect Swift sources
+    runs-on: ubuntu-latest
+    outputs:
+      has_swift: ${{ steps.check.outputs.has_swift }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: check
+        run: |
+          if [ -n "$(git ls-files '*.swift')" ]; then
+            echo "has_swift=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_swift=false" >> "$GITHUB_OUTPUT"
+            echo "No Swift sources yet; CodeQL analysis is skipped until code exists."
+          fi
+
+  analyze:
+    name: Analyze Swift
+    needs: detect
+    if: needs.detect.outputs.has_swift == 'true'
+    runs-on: macos-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select Xcode 26
+        run: |
+          latest_xcode="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$latest_xcode" ] && sudo xcode-select -s "$latest_xcode/Contents/Developer"
+          xcodebuild -version
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: swift
+      - name: Build for analysis
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: |
+          # Filesystem-synchronized groups don't enumerate sources in the pbxproj,
+          # so the autobuilder finds no target; build explicitly. Build the leanest
+          # product CodeQL can still trace: a single arch (ARCHS=arm64, the runner
+          # is arm64) instead of a universal binary, no SwiftUI preview/debug-dylib,
+          # no index store, no testability. A generic macOS destination builds
+          # without hunting for a device. These trim a few minutes; the tracer's
+          # system-module precompile is the irreducible floor (see header).
+          printf 'DEVELOPMENT_TEAM = %s\n' "$DEVELOPMENT_TEAM" > Secrets.xcconfig
+          xcodebuild build \
+            -scheme AppName \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            ENABLE_PREVIEWS=NO \
+            ENABLE_TESTABILITY=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:swift"
