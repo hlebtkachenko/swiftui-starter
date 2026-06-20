@@ -12,6 +12,11 @@ Release tags use `vX.Y.Z`:
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-20
+
+### Added
+- `docs/using-the-template.md`: a step-by-step guide to start a new app from this template (get a copy, rename `AppName`, signing, build, protect `main`, replace the example domain). Linked from `README.md`, `AGENTS.md`, and the ownership map.
+
 ## [0.2.0] - 2026-06-20
 
 ### Added

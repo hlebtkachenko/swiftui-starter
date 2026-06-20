@@ -12,6 +12,7 @@ Single source of truth: **each topic lives in exactly one file.** Other files li
 | Engineering principles and conventions | [engineering.md](engineering.md) |
 | Secrets, personal data, privacy, guard internals, denylist | [security.md](security.md) |
 | CI gates, the `main` ruleset, release process | [ci-cd.md](ci-cd.md) |
+| How to start a new app from this template | [using-the-template.md](using-the-template.md) |
 | Founding technical decisions (canonical, one per record) | [adr/README.md](adr/README.md) plus the numbered records listed below |
 | OS 26 SwiftUI / Liquid Glass stack research and evidence behind the ADRs | [plans/os26-apple-native-research.md](plans/os26-apple-native-research.md) |
 | Implementation recipes distilled from Apple samples and docs | [patterns.md](patterns.md) |

@@ -6,7 +6,7 @@ This is a **template** (`AppName` is a placeholder). Once you start a real app f
 
 - **What this is:** a SwiftUI starter for Apple-native, multiplatform apps (iPhone, iPad, Mac).
 - **Platform:** minimum OS 26; Liquid Glass only.
-- **Version:** 0.2.0. Ships a working, tested spine plus one example feature (a family wishlist) demonstrating the CloudKit + `CKShare` stack. CI passes with no secrets configured, and the `main` ruleset is reproducible from the repo (see `docs/ci-cd.md`).
+- **Version:** 0.2.1. Ships a working, tested spine plus one example feature (a family wishlist) demonstrating the CloudKit + `CKShare` stack. CI passes with no secrets configured, and the `main` ruleset is reproducible from the repo (see `docs/ci-cd.md`). Start a new app with `docs/using-the-template.md`.
 
 ## Stack
 

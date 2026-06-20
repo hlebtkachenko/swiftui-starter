@@ -78,6 +78,7 @@ Tags `vX.Y.Z`: X major (manual), Y feature (unbounded), Z fix. See `docs/ci-cd.m
 
 ## Index
 
+- `docs/using-the-template.md` - step-by-step guide to start a new app from this template (clone, rename, sign, build, protect).
 - `STATE.md` - what the template provides and how to start a new app from it.
 - `docs/adr/` - architecture decision records: the founding stack decisions, one per record (canonical).
 - `docs/` - engineering, security, CI/CD detail.

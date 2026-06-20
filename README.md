@@ -15,6 +15,8 @@ A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, M
 
 ## Getting started
 
+Full walkthrough: [docs/using-the-template.md](docs/using-the-template.md). In short:
+
 1. **Clone** and enable the local hooks: `git config core.hooksPath .githooks`.
 2. **Rename** `AppName` to your app: find/replace `AppName` (and the lowercase `appname` in the bundle ID / container) across the tree, then rename the `AppName*` folders, files, and `AppName.xcodeproj`. Bundle IDs default to `dev.hapd.appname`; change the prefix to your own.
 3. **Signing:** copy `Secrets.xcconfig.example` to `Secrets.xcconfig` and set `DEVELOPMENT_TEAM` (gitignored, never committed).
@@ -38,6 +40,7 @@ A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, M
 
 ## Documentation
 
+- [docs/using-the-template.md](docs/using-the-template.md) - step-by-step guide to start a new app from this template
 - [STATE.md](STATE.md) - what the template provides and how to start a new app from it
 - [AGENTS.md](AGENTS.md) - working guidance for AI agents and contributors (`CLAUDE.md` is a symlink to it)
 - [docs/](docs/README.md) - engineering, security, CI/CD, and the ADRs
