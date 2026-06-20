@@ -58,6 +58,23 @@ It cannot be made fast, but security scanning of real code is worth the wait, so
 
 `CODEOWNERS` requests the owner's review on every PR.
 
+A ruleset is a repository **setting**, so it does not travel with a clone or a fork. To keep it reproducible it is checked in as code at [`.github/rulesets/main.json`](../.github/rulesets/main.json), and applied with one idempotent command (needs the `gh` CLI with admin on the repo):
+
+```bash
+./.github/scripts/setup-branch-protection.sh
+```
+
+The script creates the ruleset, or updates it in place if one named `main` already exists. Edit the JSON and re-run to change the rules. You can also import the JSON manually under Settings -> Rules -> Rulesets -> New ruleset -> Import.
+
+## Forks and secrets
+
+CI passes with **no repository secrets configured**, so a fresh copy is green out of the box:
+
+- `DEVELOPMENT_TEAM` (used by `codeql`) is optional - the analysis build disables code signing, so an unset value just writes an empty `Secrets.xcconfig`. Set it only to trace a signed build.
+- `FORBIDDEN_STRINGS` (used by `guard`) is optional - the personal-data check runs its email scan regardless and only adds the private denylist when the secret is present.
+
+Neither secret is required to merge. Add them later as enhancements.
+
 ## Versioning and releases
 
 Release tags use `vX.Y.Z`:

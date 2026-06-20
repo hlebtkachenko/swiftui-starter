@@ -27,13 +27,14 @@ A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, M
 
 5. **Replace the example domain** in `AppName/Data` with your own model and views.
 6. **Turn on CloudKit (optional):** provision an iCloud container, set its identifier in `AppName.entitlements`, `AppName/Info.plist`, and `cloudKitContainerIdentifier` in `PersistenceController.swift` (it is `nil` by default, so the template runs as a local store with no iCloud setup).
+7. **Protect `main`:** branch protection is a repo setting, not a file, so it does not carry over on copy. Reproduce it with `./.github/scripts/setup-branch-protection.sh` (needs the `gh` CLI with admin on your repo). See [docs/ci-cd.md](docs/ci-cd.md).
 
 ## Constraints
 
 - Minimum OS 26 (iOS / iPadOS / macOS). No back-deployment.
 - Liquid Glass only - genuine system APIs (`glassEffect`, `GlassEffectContainer`, `.glass` / `.glassProminent`); never faked with blurs or gradients. This is the reason for the OS 26 floor.
 
-`main` is protected by a ruleset; every pull request must pass **gitleaks**, **guard**, **pr-check**, and **CodeQL**. Releases are tagged `vX.Y.Z` and validated against the changelog.
+`main` is protected by a ruleset (checked in at `.github/rulesets/main.json`, applied with the script above); every pull request must pass **gitleaks**, **guard**, **pr-check**, and **CodeQL**. CI passes with **no repository secrets configured** - a fresh copy is green out of the box (`DEVELOPMENT_TEAM` and `FORBIDDEN_STRINGS` are optional). Releases are tagged `vX.Y.Z` and validated against the changelog.
 
 ## Documentation
 

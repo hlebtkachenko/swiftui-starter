@@ -12,6 +12,14 @@ Release tags use `vX.Y.Z`:
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-20
+
+### Added
+- Branch protection as code: the `main` ruleset is checked in at `.github/rulesets/main.json` and applied with one idempotent command, `./.github/scripts/setup-branch-protection.sh`. A ruleset is a repository setting that does not travel with a clone or fork, so a fresh copy can now reproduce the same protection (PR required, the four required status checks, linear history, no force-push or deletion) instead of relying on settings that silently fail to carry over.
+
+### Changed
+- CI passes with no repository secrets configured, so a fresh copy is green out of the box. The CodeQL build disables code signing, making the `DEVELOPMENT_TEAM` secret optional; `FORBIDDEN_STRINGS` was already optional in the personal-data guard. Documented under "Forks and secrets" in `docs/ci-cd.md`.
+
 ## [0.1.0] - 2026-06-20
 
 ### Added

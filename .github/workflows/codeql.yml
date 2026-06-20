@@ -70,6 +70,10 @@ jobs:
           languages: swift
       - name: Build for analysis
         env:
+          # Optional: forks need not set this secret. The build below disables
+          # code signing (CODE_SIGNING_ALLOWED=NO), so no Team ID is required and
+          # an unset secret simply writes an empty value. Set it only to trace a
+          # signed build.
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           # Filesystem-synchronized groups don't enumerate sources in the pbxproj,
