@@ -58,39 +58,39 @@ final class SceneDelegate: NSObject, UIWindowSceneDelegate {
     }
 }
 
-/// Required delegate for `UICloudSharingController`. Retained via the shared
-/// instance because the controller holds its delegate weakly.
-final class CloudSharingDelegate: NSObject, UICloudSharingControllerDelegate {
-    static let shared = CloudSharingDelegate()
-
-    func itemTitle(for csc: UICloudSharingController) -> String? { "Wishlist" }
-
-    func cloudSharingController(_ csc: UICloudSharingController, failedToSaveShareWithError error: Error) {
-        NSLog("AppName: share save failed: \(error)")
-    }
-
-    func cloudSharingControllerDidSaveShare(_ csc: UICloudSharingController) {
-        NSLog("AppName: share saved")
-    }
-}
-
-/// Builds and modally presents the system sharing sheet for a wishlist. Uses the
-/// `preparationHandler` init so the controller drives share creation and saving
-/// (the reliable path for `NSPersistentCloudKitContainer`), and presents it on
-/// the topmost view controller — embedding it in a SwiftUI `.sheet` yields a
-/// blank sheet.
+/// Builds and modally presents the system share sheet for a wishlist. Uses the
+/// replacement Apple names for the deprecated
+/// `UICloudSharingController(preparationHandler:)`: an `NSItemProvider` with a
+/// registered CloudKit share preparation handler inside a
+/// `UIActivityViewController`. The sheet drives share creation; the handler
+/// creates the share through `NSPersistentCloudKitContainer`. It is presented on
+/// the topmost view controller, because embedding it in a SwiftUI `.sheet`
+/// yields a blank sheet.
 @MainActor
 func presentWishlistShare(for list: NSManagedObject) {
-    let container = PersistenceController.shared.container
-    let controller = UICloudSharingController { _, completion in
-        container.share([list], to: nil) { _, share, ckContainer, error in
-            share?[CKShare.SystemFieldKey.title] = "Wishlist" as CKRecordValue
-            completion(share, ckContainer, error)
-        }
+    guard let identifier = PersistenceController.cloudKitContainerIdentifier else {
+        NSLog("AppName: sharing needs CloudKit sync; set cloudKitContainerIdentifier")
+        return
     }
-    controller.delegate = CloudSharingDelegate.shared
-    controller.availablePermissions = [.allowPrivate, .allowReadWrite, .allowReadOnly]
-    presentTopmost(controller)
+    let listID = list.objectID
+    let options = CKAllowedSharingOptions(allowedParticipantPermissionOptions: .any,
+                                          allowedParticipantAccessOptions: .specifiedRecipientsOnly)
+    let provider = NSItemProvider()
+    provider.registerCKShare(container: CKContainer(identifier: identifier),
+                             allowedSharingOptions: options) {
+        try await makeWishlistShare(listID)
+    }
+    let configuration = UIActivityItemsConfiguration(itemProviders: [provider])
+    presentTopmost(UIActivityViewController(activityItemsConfiguration: configuration))
+}
+
+@MainActor
+private func makeWishlistShare(_ listID: NSManagedObjectID) async throws -> CKShare {
+    let container = PersistenceController.shared.container
+    let list = container.viewContext.object(with: listID)
+    let (_, share, _) = try await container.share([list], to: nil)
+    share[CKShare.SystemFieldKey.title] = "Wishlist" as CKRecordValue
+    return share
 }
 
 @MainActor
