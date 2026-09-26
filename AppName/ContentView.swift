@@ -43,7 +43,9 @@ struct ContentView: View {
             // A folder deleted elsewhere (another device, a revoked share) drops out
             // of the fetch, and the placeholder takes its place.
             if let folder = folders.first(where: { $0.objectID == selection }) {
+                // A fresh identity per folder, so its share state never carries over.
                 FolderDetailView(folder: folder)
+                    .id(folder.objectID)
             } else {
                 ContentUnavailableView("No Folder Selected", systemImage: "folder")
             }
@@ -59,6 +61,9 @@ private struct FolderDetailView: View {
     @Environment(AppEnvironment.self) private var environment
     @ObservedObject private var folder: Folder
     @FetchRequest private var items: FetchedResults<Item>
+    /// Resolved once per folder and after each clean sync event, not per body
+    /// evaluation: the lookup is a synchronous CloudKit share fetch.
+    @State private var shareItem: CloudShareItem?
 
     init(folder: Folder) {
         self.folder = folder
@@ -103,9 +108,14 @@ private struct FolderDetailView: View {
                 }
             }
         }
+        .task(id: folder.objectID) { shareItem = resolveShareItem() }
+        // A stale `nil` is safe (the prepare path reuses an existing share); a
+        // stale share is replaced here once the next sync event finishes.
+        .onChange(of: environment.sync.lastSync) { shareItem = resolveShareItem() }
     }
 
-    private var shareItem: CloudShareItem? {
+    private func resolveShareItem() -> CloudShareItem? {
+        guard !folder.isDeleted, folder.managedObjectContext != nil else { return nil }
         do {
             return try environment.store.shareItem(for: folder)
         } catch {
