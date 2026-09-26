@@ -9,17 +9,14 @@ struct SettingsView: View {
     @Environment(AppEnvironment.self) private var environment
 
     var body: some View {
-        TabView {
-            Form {
-                LabeledContent("iCloud account", value: environment.connectivity.account.label)
-                LabeledContent("Network", value: environment.connectivity.isOnline ? "Online" : "Offline")
-                LabeledContent("Sync", value: environment.sync.state.label)
-                LabeledContent("Last sync", value: lastSyncText)
-            }
-            .formStyle(.grouped)
-            .tabItem { Label("General", systemImage: "gearshape") }
+        Form {
+            LabeledContent("iCloud account", value: environment.connectivity.account.label)
+            LabeledContent("Network", value: environment.connectivity.isOnline ? "Online" : "Offline")
+            LabeledContent("Sync", value: environment.sync.state.label)
+            LabeledContent("Last sync", value: lastSyncText)
         }
-        .frame(width: 420, height: 220)
+        .formStyle(.grouped)
+        .frame(minWidth: 420)
     }
 
     private var lastSyncText: String {
