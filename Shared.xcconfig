@@ -1,7 +1,9 @@
 // Shared build configuration.
-// The signing team is provided out-of-band via the gitignored Secrets.xcconfig
-// (copy Secrets.xcconfig.example to Secrets.xcconfig and set DEVELOPMENT_TEAM),
-// keeping the Apple Developer Team ID out of this public repository.
+// Per-user values come from the gitignored Secrets.xcconfig (copy
+// Secrets.xcconfig.example): the signing team (DEVELOPMENT_TEAM), keeping the
+// Apple Developer Team ID out of this public repository, and the bundle ID
+// prefix. The defaults below come first so Secrets.xcconfig overrides them.
+BUNDLE_ID_PREFIX = com.example
 #include? "Secrets.xcconfig"
 
 // Zero-warning policy: every Swift and C-family warning fails the build.

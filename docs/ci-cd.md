@@ -2,13 +2,14 @@
 
 ## Gates
 
-All run on GitHub-hosted runners, and every workflow uses `concurrency: cancel-in-progress`, so a newer commit supersedes an in-flight run. The first three are required checks on `main`; `codeql` is suspended as a gate (below).
+All run on GitHub-hosted runners, and every workflow uses `concurrency: cancel-in-progress`, so a newer commit supersedes an in-flight run. `gitleaks`, `guard`, `pr-check` and `build` are required checks on `main`; `codeql` is suspended as a gate (below).
 
 | Workflow | Required check | Runs on | Runner, cost | What it does |
 |----------|----------------|---------|--------------|--------------|
 | `gitleaks.yml` | Scan for secrets | PR, push to `main` | ubuntu, ~10 s | Secret scan over full history, redacted output. |
 | `guard.yml` | Block secrets and private files | PR, push to `main` | ubuntu, ~15 s | The `.github/scripts/check-*.sh` guards: secrets/private files, private keys, oversized files, personal data, dead links, duplicate docs, ownership map. See [security.md](security.md). |
 | `pr-check.yml` | PR title and description | PR only | ubuntu, ~5 s | Conventional Commits title and a non-trivial description. |
+| `build.yml` | Build and test | PR, push to `main`, manual | ubuntu `changes` job, then **macOS** (`xcode-27`) | Unit tests on macOS and an iOS Simulator build-for-testing, code signing off, no simulator boot. The ubuntu job skips the macOS job when a PR touches no Swift or project file; a skipped job still satisfies the required check. Free on public repos; a private copy pays the 10x macOS minute rate. |
 | `codeql.yml` | - (suspended) | weekly (Mon 04:23 UTC), manual | **macOS**, ~17 min | Swift security and quality scan. A cheap Ubuntu `detect` job decides `has_swift` before the macOS `analyze` job runs. |
 | `release-check.yml` | - | `v*` tag push | ubuntu, ~10 s | Validates `vX.Y.Z` and a matching `CHANGELOG.md` entry, then publishes the GitHub release. |
 
@@ -16,7 +17,7 @@ All run on GitHub-hosted runners, and every workflow uses `concurrency: cancel-i
 
 ### CodeQL on Xcode 27: suspended as a gate
 
-Since 2026-09-26 the `xcode-27` runner image ships Xcode's `swift-plugin-server` and `sandbox-exec` as arm64-only, while CodeQL's Swift tracer runs the build as x86_64, so every macro expansion fails with "Bad CPU type in executable". Pinning an older CodeQL bundle does not help, and the OS 27 floor rules out building on Xcode 26. Until the problem is fixed upstream, `codeql.yml` runs only weekly and on demand as a probe, and `Analyze Swift` is not a required check. The first green probe on `main` runs the `restore` job, which opens a PR that restores the `push` / `pull_request` triggers and the ruleset entry. That job needs Settings -> Actions -> "Allow GitHub Actions to create pull requests" enabled; after merging the PR, run `setup-branch-protection.sh`.
+Since 2026-09-26 the `xcode-27` runner image ships Xcode's `swift-plugin-server` and `sandbox-exec` as arm64-only, while CodeQL's Swift tracer runs the build as x86_64, so every macro expansion fails with "Bad CPU type in executable". Pinning an older CodeQL bundle does not help, and the OS 27 floor rules out building on Xcode 26. Until the problem is fixed upstream, `codeql.yml` runs only weekly and on demand as a probe, and `Analyze Swift` is not a required check. The first green probe on `main` runs the `restore` job, which opens a PR that restores the `push` / `pull_request` triggers and the ruleset entry. That job needs Settings -> Actions -> "Allow GitHub Actions to create pull requests" enabled; after merging the PR, run `setup-branch-protection.sh`. GitHub disables a scheduled workflow after 60 days without repository activity, so each probe run also re-enables `codeql.yml` through the API (best effort: the docs do not say this resets the timer). If the probe still shows as disabled under Actions, enable it there.
 
 ### Why CodeQL is slow, and why it gates anyway
 
@@ -27,7 +28,7 @@ CodeQL's Swift extractor needs a full build under its compiler tracer, and the t
 `main` is protected by a repository ruleset (not classic branch protection):
 
 - Pull request required (0 approvals; a solo owner cannot approve their own PR).
-- Required status checks: `Scan for secrets`, `Block secrets and private files`, `PR title and description` (`Analyze Swift` returns once CodeQL works on Xcode 27, see above).
+- Required status checks: `Scan for secrets`, `Block secrets and private files`, `PR title and description`, `Build and test` (`Analyze Swift` returns once CodeQL works on Xcode 27, see above).
 - Linear history, no deletion, no force-push.
 - The repository admin can bypass (use sparingly, e.g. an unblockable greenfield case).
 
@@ -46,9 +47,10 @@ The script creates the ruleset, or updates it in place if one named `main` alrea
 CI passes with **no repository secrets configured**, so a fresh copy is green out of the box:
 
 - `DEVELOPMENT_TEAM` (used by `codeql`) is optional - the analysis build disables code signing, so an unset value just writes an empty `Secrets.xcconfig`. Set it only to trace a signed build.
+- `BUNDLE_ID_PREFIX` is a repository variable, not a secret, read by `build` and `codeql`, which write it into `Secrets.xcconfig`. Unset, bundle IDs fall back to `com.example` (setup: [using-the-template.md](using-the-template.md#3-signing-and-bundle-id-prefix)). Xcode Cloud gets it the same way: set `BUNDLE_ID_PREFIX` as a workflow environment variable and `ci_scripts/ci_post_clone.sh` writes it.
 - `FORBIDDEN_STRINGS` (used by `guard`) is optional - the personal-data check runs its email scan regardless and only adds the private denylist when the secret is present.
 
-Neither secret is required to merge. Add them later as enhancements.
+None of these is required to merge. Add them later as enhancements.
 
 ## Versioning and releases
 

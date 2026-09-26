@@ -19,7 +19,7 @@ final class PersistenceController {
     ///
     /// To turn sync on: create the container in the Apple Developer portal, set
     /// its identifier in `AppName.entitlements`, then set this to
-    /// that identifier (for example `"iCloud.dev.hapd.appname"`). It must stay
+    /// that identifier (for example `"iCloud.<BUNDLE_ID_PREFIX>.appname"`). It must stay
     /// `nil` until the container exists, because activating CloudKit against an
     /// unprovisioned container hard-crashes on launch (an uncatchable trap on
     /// `com.apple.coredata.cloudkit.queue`). A run target with no signed-in iCloud

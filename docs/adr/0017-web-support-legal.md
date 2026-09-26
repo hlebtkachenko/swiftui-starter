@@ -1,6 +1,6 @@
 # ADR-0017: Web presence, support, and legal pages
 
-**Status:** Accepted - 2026-06-09
+**Status:** Accepted - 2026-06-09; amended 2026-09-26 (site host chosen per app)
 
 ## Context
 
@@ -8,7 +8,7 @@ The App Store requires a working support URL and a privacy policy URL, and AppNa
 
 ## Decision
 
-- Host everything on `appname.hapd.dev`, which already exists: a minimal info-only marketing page plus the App Store-required support, privacy policy, terms, and account-deletion pages.
+- Host everything on one site, `appname.<your-domain>` (amended 2026-09-26: each app picks its own host instead of a fixed template domain): a minimal info-only marketing page plus the App Store-required support, privacy policy, terms, and account-deletion pages.
 - Keep the site static and served over HTTPS, with no analytics. Treat branded Universal Links as optional and post-v1.
 
 ## Consequences

@@ -11,7 +11,7 @@ A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, M
 - A domain-agnostic app spine: composition root, router, sync and connectivity monitors, shared commands, macOS Settings, `OSLog` and MetricKit, a privacy manifest.
 - A CloudKit + `CKShare` data layer (one store class, an in-memory store for tests), shown through a generic Folder / Item example with no seed data, which you replace.
 - Swift Testing for logic, XCTest for UI.
-- CI gates (gitleaks, guard, pr-check; CodeQL suspended until it supports Xcode 27), a reproducible `main` ruleset, and founding [Architecture Decision Records](docs/adr/README.md).
+- CI gates (gitleaks, guard, pr-check, a Swift build and test; CodeQL suspended until it supports Xcode 27), a reproducible `main` ruleset, and founding [Architecture Decision Records](docs/adr/README.md).
 
 Code layout: [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -24,7 +24,7 @@ Follow [docs/using-the-template.md](docs/using-the-template.md): copy, rename `A
 - No back-deployment below OS 27.
 - Liquid Glass only through genuine system APIs (`glassEffect`, `GlassEffectContainer`, `.glass` / `.glassProminent`), never faked with blurs or gradients; that is why the floor tracks the newest OS.
 
-Every pull request to `main` must pass gitleaks, guard, and pr-check (CodeQL rejoins once it supports Xcode 27). CI needs **no repository secrets** to go green. Releases are tagged `vX.Y.Z`; see [docs/ci-cd.md](docs/ci-cd.md).
+Every pull request to `main` must pass gitleaks, guard, pr-check, and build (CodeQL rejoins once it supports Xcode 27). CI needs **no repository secrets** to go green. Releases are tagged `vX.Y.Z`; see [docs/ci-cd.md](docs/ci-cd.md).
 
 ## Documentation
 

@@ -24,7 +24,7 @@ This is a **template** (`AppName` is a placeholder). Once you start a real app f
 | Test framework | Swift Testing; XCTest only for UI automation and performance |
 | AI | None; later on-device Foundation Models only (no third-party/cloud LLM) |
 | Observability | First-party only: `OSLog`, MetricKit, Xcode Organizer, App Store Connect analytics |
-| CI | Xcode Cloud (build/test/sign/ship) + GitHub Actions (repo gates + tag-push release) |
+| CI | Xcode Cloud (build/test/sign/ship) + GitHub Actions (repo gates, PR build and test, tag-push release) |
 | Agent tooling | `AGENTS.md` + `ARCHITECTURE.md`; CodeGraph index (local, gitignored) via project `.mcp.json` |
 
 Each row is an ADR in `docs/adr/` (0001-0017); revisit any that does not fit your app.
@@ -34,7 +34,7 @@ Each row is an ADR in `docs/adr/` (0001-0017); revisit any that does not fit you
 - Xcode project `AppName.xcodeproj`: the `AppName` app, `AppNameTests` (Swift Testing), `AppNameUITests`; signing team in a gitignored `Secrets.xcconfig` wired via `Shared.xcconfig`.
 - App spine (`AppName/Core`, `AppName/Commands`, `AppName/Views`) and the Folder / Item example (`AppName/Data`, `AppName/Sharing`, `ContentView.swift`), described in `ARCHITECTURE.md`.
 - Swift Testing cases for the store (create, sort, cascade delete, save rollback), the model's CloudKit rules, sharing on an in-memory store, and sync state and display precedence.
-- CI gates: gitleaks, guard, pr-check, release-check; codeql runs weekly as an Xcode 27 probe until it can gate again; the `main` ruleset as code (`docs/ci-cd.md`).
+- CI gates: gitleaks, guard, pr-check, build (macOS tests + iOS Simulator build), release-check; codeql runs weekly as an Xcode 27 probe until it can gate again; the `main` ruleset as code (`docs/ci-cd.md`).
 
 ## Known gaps
 

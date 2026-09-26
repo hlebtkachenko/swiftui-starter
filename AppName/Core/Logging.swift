@@ -5,7 +5,7 @@ import OSLog
 /// calls can be retired (ADR-0012). `Logger` is `Sendable`, so these are safe to
 /// touch from any isolation.
 nonisolated enum Log {
-    static let subsystem = "dev.hapd.appname"
+    static let subsystem = Bundle.main.bundleIdentifier ?? "AppName"
 
     static let app = Logger(subsystem: subsystem, category: "app")
     static let persistence = Logger(subsystem: subsystem, category: "persistence")

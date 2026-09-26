@@ -34,6 +34,7 @@ Enable the pre-commit hook once per clone: `git config core.hooksPath .githooks`
 
 - New Swift files need no `project.pbxproj` edit: the targets use filesystem-synchronized groups. Do not propose XcodeGen or Tuist (ADR-0015).
 - Signing team lives in the gitignored `Secrets.xcconfig` (from `Secrets.xcconfig.example`), included by `Shared.xcconfig`.
+- Never hardcode the bundle ID prefix: bundle IDs and the iCloud container use `$(BUNDLE_ID_PREFIX)`, set in `Secrets.xcconfig` locally and the `BUNDLE_ID_PREFIX` repo variable in CI (default `com.example`). The one exception: `PersistenceController.cloudKitContainerIdentifier` is a Swift literal and must match `iCloud.$(BUNDLE_ID_PREFIX).appname`.
 - CloudKit is off by default: `PersistenceController.cloudKitContainerIdentifier` is `nil`, so the app runs on a local store. Set it only after the container exists in the Developer portal and matches `com.apple.developer.icloud-container-identifiers` in `AppName.entitlements` (`Info.plist` needs nothing): an unprovisioned container crashes at launch.
 - Every write goes through the concrete `AppNameStore` class; its `save()` rolls back and rethrows. Keep CloudKit calls inside the store and persistence types; tests use `PersistenceController(inMemory: true)` (ADR-0013).
 - Identity is `NSManagedObjectID` (no `id` attribute); selection and share closures capture the object ID, never the managed object.
@@ -41,7 +42,7 @@ Enable the pre-commit hook once per clone: `git config core.hooksPath .githooks`
 - `Shared.xcconfig` sets `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS`, so any new warning fails the build.
 - Docs: each topic has one home, mapped in [docs/README.md](docs/README.md). `check-duplication.sh` fails on any line of 45+ characters repeated verbatim across Markdown files, and `check-ownership-map.sh` fails when a new `.md` file is missing from the map.
 - Accepted ADRs change only by a dated amendment or a superseding record ([docs/adr/README.md](docs/adr/README.md)).
-- Required merge checks: gitleaks, guard, pr-check (Conventional Commits title + description). CodeQL (~17 min macOS build) is suspended as a gate until its tracer works with Xcode 27; it probes weekly and opens a restore PR itself. Detail and the release steps: [docs/ci-cd.md](docs/ci-cd.md).
+- Required merge checks: gitleaks, guard, pr-check (Conventional Commits title + description), and `Build and test` from `build.yml` (macOS unit tests + iOS Simulator build; skipped on PRs without Swift or project changes). CodeQL (~17 min macOS build) is suspended as a gate until its tracer works with Xcode 27; it probes weekly and opens a restore PR itself. Detail and the release steps: [docs/ci-cd.md](docs/ci-cd.md).
 - Update `STATE.md` and `CHANGELOG.md` (`## [Unreleased]`) when a change affects them.
 
 <!-- CODEGRAPH_START -->

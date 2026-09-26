@@ -37,6 +37,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  keepalive:
+    name: Keep the probe enabled
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      # GitHub disables scheduled workflows in a public repo after 60 days
+      # without repository activity (this probe once went to
+      # disabled_inactivity). Re-enabling is the documented fix: `gh workflow
+      # enable` or PUT .../actions/workflows/{id}/enable, which "sets the state
+      # of the workflow to active":
+      # https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows
+      # https://docs.github.com/en/rest/actions/workflows#enable-a-workflow
+      # The docs do not say whether this call resets the 60-day timer, so this
+      # is best effort; it runs as its own job so a failure never
+      # skips the probe and PR runs never hold an actions: write token.
+      - name: Keep this scheduled probe enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable codeql.yml --repo "$GITHUB_REPOSITORY"
+
   detect:
     name: Detect Swift sources
     runs-on: ubuntu-latest
@@ -84,6 +106,8 @@ jobs:
           # an unset secret simply writes an empty value. Set it only to trace a
           # signed build.
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+          # Optional repo variable (not a secret); unset keeps the com.example default.
+          BUNDLE_ID_PREFIX: ${{ vars.BUNDLE_ID_PREFIX }}
         run: |
           # Filesystem-synchronized groups don't enumerate sources in the pbxproj,
           # so the autobuilder finds no target; build explicitly. Build the leanest
@@ -93,6 +117,9 @@ jobs:
           # without hunting for a device. These trim a few minutes; the tracer's
           # system-module precompile is the irreducible floor (see header).
           printf 'DEVELOPMENT_TEAM = %s\n' "$DEVELOPMENT_TEAM" > Secrets.xcconfig
+          if [ -n "$BUNDLE_ID_PREFIX" ]; then
+            printf 'BUNDLE_ID_PREFIX = %s\n' "$BUNDLE_ID_PREFIX" >> Secrets.xcconfig
+          fi
           xcodebuild build \
             -scheme AppName \
             -destination 'generic/platform=macOS' \

@@ -7,7 +7,7 @@ How the template's code is laid out and how the pieces talk. Decisions and their
 ```
 AppName.xcodeproj/          # one multiplatform app target + 2 test targets, synchronized folders
 Shared.xcconfig             # shared build settings (warnings are errors); includes the gitignored Secrets.xcconfig
-Secrets.xcconfig.example    # DEVELOPMENT_TEAM template (copy to Secrets.xcconfig)
+Secrets.xcconfig.example    # DEVELOPMENT_TEAM and BUNDLE_ID_PREFIX template (copy to Secrets.xcconfig)
 AppName/
 ├── AppNameApp.swift        # @main: WindowGroup + macOS Settings scene, platform app delegates
 ├── ContentView.swift       # NavigationSplitView: folder sidebar + private FolderDetailView (items)
@@ -16,7 +16,7 @@ AppName/
 │   ├── SyncMonitor.swift       # folds CloudKit mirroring events into SyncState
 │   ├── SyncState.swift         # SyncState, AccountState, CloudSyncEvent value types
 │   ├── Connectivity.swift      # async NWPathMonitor + iCloud account status
-│   └── Logging.swift           # OSLog Logger facade (one subsystem, fixed categories)
+│   └── Logging.swift           # OSLog Logger facade (bundle ID as subsystem, fixed categories)
 ├── Commands/               # menu and keyboard shortcuts shared by all platforms
 ├── Views/                  # SyncStatusChip, macOS SettingsView
 ├── Data/                   # example model + persistence
@@ -72,14 +72,14 @@ Apple frameworks only, no third-party packages: CloudKit and `CKShare`, Network,
 ## 6. Deployment and infrastructure
 
 - Distribution: App Store and TestFlight (Xcode Cloud per ADR-0014; not configured in this repo).
-- GitHub Actions: `gitleaks`, `guard` (the `.github/scripts/check-*.sh` scripts), `pr-check`, `codeql` (Swift build on macOS), `release-check` on `v*` tags. The `main` ruleset is code in `.github/rulesets/main.json`. Detail: [docs/ci-cd.md](docs/ci-cd.md).
+- GitHub Actions: `gitleaks`, `guard` (the `.github/scripts/check-*.sh` scripts), `pr-check`, `build` (unit tests on macOS, iOS Simulator build-for-testing), `codeql` (traced Swift build, weekly probe), `release-check` on `v*` tags. The `main` ruleset is code in `.github/rulesets/main.json`. Detail: [docs/ci-cd.md](docs/ci-cd.md).
 - Monitoring: `Log` categories in Console / Instruments, MetricKit reports received through the async `MetricManager` and logged, Xcode Organizer crash reports. Nothing leaves the device through the app.
 
 ## 7. Security considerations
 
 - Authentication: none in code yet; Sign in with Apple is the decided path (ADR-0011).
 - Authorization: CloudKit enforces access; a `CKShare` participant is read-only or read-write, and the UI gates edits on `canUpdateRecord(forManagedObjectWith:)`.
-- Secrets: signing team only, in the gitignored `Secrets.xcconfig`; the guard scripts and gitleaks block secrets, keys and personal data in the public repo ([docs/security.md](docs/security.md)).
+- Secrets: signing team and bundle ID prefix, in the gitignored `Secrets.xcconfig`; the guard scripts and gitleaks block secrets, keys and personal data in the public repo ([docs/security.md](docs/security.md)).
 - Privacy manifest: `AppName/PrivacyInfo.xcprivacy`.
 
 ## 8. Development and testing
