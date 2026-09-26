@@ -1,13 +1,21 @@
-# Implementation patterns
+# Conventions and implementation patterns
 
-Reusable recipes distilled from Apple's official samples (Food Truck, Backyard Birds, Fruta) and documentation, mapped to AppName's stack. These are conventions, not decisions; the decisions and their rationale live in [`adr/`](adr/README.md), and the API evidence in [`plans/os26-apple-native-research.md`](plans/os26-apple-native-research.md).
+Swift and Apple-platform conventions, plus reusable recipes distilled from Apple's official samples (Food Truck, Backyard Birds, Fruta) and documentation, mapped to AppName's stack. These are conventions, not decisions; the decisions and their rationale live in [`adr/`](adr/README.md), and the API evidence in [`plans/os26-apple-native-research.md`](plans/os26-apple-native-research.md).
 
-**Modernize anything borrowed.** The samples floor at iOS 15-17, so before adopting a pattern, replace the dated parts: `ObservableObject` / `@Published` / `@StateObject` / `@EnvironmentObject` become Observation (`@Observable` + `@State` + `@Environment`); `PreviewProvider` becomes the `#Preview` macro; `NavigationView` and `NavigationLink(tag:selection:)` become `NavigationSplitView` and value-based links; `Task.sleep(nanoseconds:)` becomes `Task.sleep(for:)`; `AnimatableModifier` becomes `Animatable`. The samples' size-class shims and pre-26 fallbacks are dropped at our OS 26 floor.
+**Modernize anything borrowed.** The samples floor at iOS 15-17, so before adopting a pattern, replace the dated parts: `ObservableObject` / `@Published` / `@StateObject` / `@EnvironmentObject` become Observation (`@Observable` + `@State` + `@Environment`); `PreviewProvider` becomes the `#Preview` macro; `NavigationView` and `NavigationLink(tag:selection:)` become `NavigationSplitView` and value-based links; `Task.sleep(nanoseconds:)` becomes `Task.sleep(for:)`; `AnimatableModifier` becomes `Animatable`. The samples' size-class shims and pre-27 fallbacks are dropped at our OS 27 floor.
+
+## Conventions
+
+- Name things per the **Swift API Design Guidelines**.
+- **One source of truth per feature.** A model or service type owns the state; views read from it and keep no parallel copies in `@State`. Persisted data comes from Core Data; non-persistent state from an `@Observable` service.
+- **Navigation, not actions, in the tab bar** (three to five tabs); put one or two key actions in the toolbar; use `Form` for grouped edit screens.
+- **Named asset colors** referenced as `Color("Name")` from `Assets.xcassets`, never hard-coded literals in views.
+- Read Apple's docs as Swift-DocC JSON: `curl 'https://developer.apple.com/tutorials/data<page-path>.json'`.
 
 ## Project structure and modularization
 
 - One multiplatform target for iPhone, iPad, and Mac (Food Truck confirms a single target, not per-platform targets).
-- When modularization is warranted (see [ADR-0015](adr/0015-project-structure-agent-ergonomics.md)), use the Data/UI package split that Backyard Birds and Food Truck use: a `AppNameData` local package (the `NSManagedObject` subclasses, the `NSPersistentCloudKitContainer` stack, `CKShare` helpers, fetch-request factories, and value-type snapshots, with no SwiftUI import) and a `AppNameUI` package (reusable views that take entities as plain arguments). The app target, any future widget, and the Swift Testing suites all depend on both; UI depends on Data, never the reverse. Local packages declare the OS 26 floor and Swift 6 mode.
+- When modularization is warranted (see [ADR-0015](adr/0015-project-structure-agent-ergonomics.md)), use the Data/UI package split that Backyard Birds and Food Truck use: a `AppNameData` local package (the `NSManagedObject` subclasses, the `NSPersistentCloudKitContainer` stack, `CKShare` helpers, fetch-request factories, and value-type snapshots, with no SwiftUI import) and a `AppNameUI` package (reusable views that take entities as plain arguments). The app target, any future widget, and the Swift Testing suites all depend on both; UI depends on Data, never the reverse. Local packages declare the OS 27 floor and the Swift 6 language mode.
 - Keep domain assets (named colors, custom SF Symbols, images) in the owning package's own `Assets.xcassets` and expose them as typed `Image` / `Color` members loaded with `bundle: .module`, instead of string literals at the call site.
 - Co-locate String Catalogs (`.xcstrings`) per feature and address them with `bundle: .module`.
 
@@ -20,7 +28,7 @@ Reusable recipes distilled from Apple's official samples (Food Truck, Backyard B
 
 ## Core Data previews and seed data
 
-Supports the in-memory test double in [ADR-0013](adr/0013-testing-strategy.md).
+Supports the in-memory test double in [ADR-0013](adr/0013-testing-strategy.md): previews and logic tests share one in-memory store instead of repeating setup.
 
 - Expose a `.appNameDataContainer(inMemory:)` `ViewModifier` that builds an `NSPersistentCloudKitContainer` with an in-memory store (a `/dev/null` store URL), seeds it on appear, and injects it. Use the same modifier in `#Preview` and in the headless logic tests, so previews and tests share one populated store.
 - Put seed data in per-entity `Entity+SampleData.swift` files inside `AppNameData` (no UI import), orchestrated by a single `AppNameSeedData.populate(into:)`. Make generation deterministic with a seeded random generator so previews and tests are stable run to run.
@@ -49,7 +57,6 @@ Supports [ADR-0011](adr/0011-auth-account-lifecycle.md).
 
 - **App Group container.** Put the Core Data SQLite in a shared App Group container from the start, before any widget exists, so a future widget or App Clip can read the same store without a migration (Backyard Birds' widget reuses the data layer through a shared container).
 - **Widgets and App Intents.** A widget reuses `AppNameData`; an interactive widget exposes an `AppEntity` lightweight mirror (id plus name) with an `EntityQuery`, and the `AppIntent.perform()` opens a fresh context, mutates, and saves, which propagates to CloudKit.
-- **App Clip.** A AppName App Clip could open a shared list from a `appname.hapd.dev` universal link without installing the app (Fruta's `onContinueUserActivity` plus an `APPCLIP` compile condition; a 15 MB budget; an AASA file on the domain). Design the share-URL scheme and the handler now so the clip can be added later without API changes.
 
 ## Validated as-is
 

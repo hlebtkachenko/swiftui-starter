@@ -25,7 +25,6 @@ AppName holds personal and family data. Build for minimal collection:
 - **Children and minors:** a family space may include child users. Comply with COPPA, GDPR for children, and Apple's Kids guidelines. Never behaviorally profile minors.
 - **Family sharing access control:** sharing is opt-in per item, members can revoke access, and one member must never silently expose another member's data.
 - **Retention, deletion, export:** support user-initiated data deletion and export (GDPR erasure and portability, and Apple's required in-app account deletion). Do not retain data longer than needed.
-- **Backend (TBD):** whichever backend is chosen must encrypt data in transit and at rest. If Firebase is used, disable Analytics and Crashlytics collection (on by default), which would otherwise violate the no-telemetry rule.
 - A user-facing privacy policy is required before the first release.
 
 ## How the guards work
@@ -37,8 +36,8 @@ The `guard` workflow runs these security and hygiene checks on every push and PR
 - **Oversized files** (`check-large-files.sh`): fails on any tracked file over 5 MB.
 - **Personal data** (`check-personal-data.sh`): fails on any email address in tracked files (placeholders allowlisted), plus any string in a private denylist. Reports locations only, never the matched value.
 - **Dead links** (`check-links.sh`): fails on relative Markdown links that do not resolve.
-- **Duplicate prose** (`check-duplication.sh`): fails on lines that appear verbatim in two or more Markdown files. It catches copy-paste; paraphrased duplication is prevented by the ownership map in `README.md` and by review, not by this script.
-- **Ownership map current** (`check-ownership-map.sh`): fails if a documentation file is missing from `README.md`, so the map cannot go stale when docs are added or renamed.
+- **Duplicate prose** (`check-duplication.sh`): fails on lines that appear verbatim in two or more Markdown files. It catches copy-paste; paraphrased duplication is prevented by the ownership map in `docs/README.md` and by review, not by this script.
+- **Ownership map current** (`check-ownership-map.sh`): fails if a documentation file is missing from `docs/README.md`, so the map cannot go stale when docs are added or renamed.
 
 ### Private denylist
 
