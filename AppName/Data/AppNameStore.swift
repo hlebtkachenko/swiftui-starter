@@ -25,7 +25,6 @@ struct WishItem: Identifiable, Sendable, Equatable {
 /// Data or CloudKit, so the same logic runs against an in-memory store in
 /// headless tests and against `NSPersistentCloudKitContainer` at runtime
 /// (ADR-0005, ADR-0013).
-@MainActor
 protocol AppNameStore {
     func wishlists() throws -> [Wishlist]
     @discardableResult func createWishlist(title: String) throws -> Wishlist

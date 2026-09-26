@@ -8,7 +8,6 @@ import SwiftUI
 /// the app reads through the environment: the persistence/sync store and the
 /// sync and connectivity monitors. Built once at
 /// launch from a `PersistenceController`.
-@MainActor
 @Observable
 final class AppEnvironment {
     let persistence: PersistenceController

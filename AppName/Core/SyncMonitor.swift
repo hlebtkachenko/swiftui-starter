@@ -10,7 +10,6 @@ import Observation
 /// the two for display. The event stream is reduced to a `Sendable`
 /// `CloudSyncEvent` at the boundary, so `ingest(_:)` is unit-testable without a
 /// live container.
-@MainActor
 @Observable
 final class SyncMonitor {
     private(set) var state: SyncState = .idle

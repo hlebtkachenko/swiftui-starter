@@ -4,7 +4,6 @@ import CoreData
 /// carries no view dependencies (patterns.md). Uses the public `AppNameStore` API so
 /// the seed exercises the same code paths as the app.
 enum SampleData {
-    @MainActor
     static func populate(_ context: NSManagedObjectContext) throws {
         let store = CoreDataAppNameStore(context: context)
         let birthday = try store.createWishlist(title: "Mom's Birthday")

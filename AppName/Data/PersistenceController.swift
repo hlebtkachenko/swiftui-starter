@@ -5,7 +5,6 @@ import OSLog
 /// Builds the Core Data stack. `shared` uses `NSPersistentCloudKitContainer`;
 /// `inMemory` uses an ephemeral store with no CloudKit, which is the headless
 /// test and preview double (ADR-0013).
-@MainActor
 final class PersistenceController {
     let container: NSPersistentCloudKitContainer
 
