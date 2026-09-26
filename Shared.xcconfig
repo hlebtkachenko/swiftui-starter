@@ -7,3 +7,8 @@
 // CloudKit sync needs the remote-notification background mode so
 // NSPersistentCloudKitContainer can receive push-driven changes.
 INFOPLIST_KEY_UIBackgroundModes = remote-notification
+
+// Zero-warning policy: every Swift and C-family warning fails the build.
+// Swift 6 language mode already implies complete strict concurrency.
+SWIFT_TREAT_WARNINGS_AS_ERRORS = YES
+GCC_TREAT_WARNINGS_AS_ERRORS = YES
