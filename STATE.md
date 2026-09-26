@@ -24,7 +24,7 @@ This is a **template** (`AppName` is a placeholder). Once you start a real app f
 | Test framework | Swift Testing; XCTest only for UI automation and performance |
 | AI | None; later on-device Foundation Models only (no third-party/cloud LLM) |
 | Observability | First-party only: `OSLog`, MetricKit, Xcode Organizer, App Store Connect analytics |
-| CI | Xcode Cloud (sign/ship) + GitHub Actions (repo gates, PR build and test, tag-push release) |
+| CI | Xcode Cloud (build/test/sign/ship) + GitHub Actions (repo gates, PR build and test, tag-push release) |
 | Agent tooling | `AGENTS.md` + `ARCHITECTURE.md`; CodeGraph index (local, gitignored) via project `.mcp.json` |
 
 Each row is an ADR in `docs/adr/` (0001-0017); revisit any that does not fit your app.
