@@ -84,16 +84,10 @@ struct CloudSyncEvent: Sendable, Equatable {
     }
 }
 
-/// A human-facing read of a sync error plus whether the system retries it on its
-/// own. Pure and testable; CloudKit is inspected via the bridged `NSError` so no
-/// `CKError` value has to be constructed by callers.
-struct SyncErrorInfo: Equatable, Sendable {
-    var message: String
-    var isRetryable: Bool
-}
-
+/// A human-facing read of a sync error. Pure and testable; CloudKit is inspected
+/// via the bridged `NSError` so no `CKError` value has to be constructed by callers.
 enum SyncErrorMapper {
-    static func describe(_ error: Error) -> SyncErrorInfo {
+    static func describe(_ error: Error) -> String {
         let ns = error as NSError
         if ns.domain == CKErrorDomain {
             switch ns.code {
@@ -102,16 +96,16 @@ enum SyncErrorMapper {
                  CKError.Code.serviceUnavailable.rawValue,
                  CKError.Code.requestRateLimited.rawValue,
                  CKError.Code.zoneBusy.rawValue:
-                return SyncErrorInfo(message: "A network problem interrupted sync. It will retry automatically.", isRetryable: true)
+                return "A network problem interrupted sync. It will retry automatically."
             case CKError.Code.quotaExceeded.rawValue:
-                return SyncErrorInfo(message: "Your iCloud storage is full. Free up space to keep syncing.", isRetryable: false)
+                return "Your iCloud storage is full. Free up space to keep syncing."
             case CKError.Code.notAuthenticated.rawValue:
-                return SyncErrorInfo(message: "Sign in to iCloud to sync.", isRetryable: false)
+                return "Sign in to iCloud to sync."
             default:
-                return SyncErrorInfo(message: "Sync hit a problem and will retry.", isRetryable: true)
+                return "Sync hit a problem and will retry."
             }
         }
         let fallback = ns.localizedDescription.isEmpty ? "Sync hit a problem and will retry." : ns.localizedDescription
-        return SyncErrorInfo(message: fallback, isRetryable: true)
+        return fallback
     }
 }

@@ -4,15 +4,14 @@ import OSLog
 import SwiftUI
 
 /// The composition root injected into every scene. Holds the spine the rest of
-/// the app reads through the environment: the persistence/sync store, the
-/// navigation router, and the sync and connectivity monitors. Built once at
+/// the app reads through the environment: the persistence/sync store and the
+/// sync and connectivity monitors. Built once at
 /// launch from a `PersistenceController`.
 @MainActor
 @Observable
 final class AppEnvironment {
     let persistence: PersistenceController
     let store: CoreDataAppNameStore
-    let router: AppRouter
     let sync: SyncMonitor
     let connectivity: Connectivity
 
@@ -21,7 +20,6 @@ final class AppEnvironment {
     init(persistence: PersistenceController) {
         self.persistence = persistence
         self.store = CoreDataAppNameStore(persistence)
-        self.router = AppRouter()
         self.sync = SyncMonitor()
         self.connectivity = Connectivity(containerIdentifier: PersistenceController.cloudKitContainerIdentifier)
 

@@ -4,7 +4,7 @@ import CloudKit
 @testable import AppName
 
 /// Headless tests for the app spine: the sync state machine, error mapping,
-/// account mapping, and the router. None of these need a live CloudKit container
+/// and account mapping. None of these need a live CloudKit container
 /// (ADR-0013); the event stream is fed as `Sendable` `CloudSyncEvent` values.
 @MainActor
 @Suite struct SpineTests {
@@ -15,7 +15,6 @@ import CloudKit
         let monitor = SyncMonitor()
         #expect(monitor.state == .idle)
         #expect(monitor.lastSync == nil)
-        #expect(monitor.hasCompletedFirstImport == false)
     }
 
     @Test func importInProgressReportsSyncing() {
@@ -24,12 +23,11 @@ import CloudKit
         #expect(monitor.state == .syncing)
     }
 
-    @Test func completedImportReturnsToIdleAndMarksFirstImport() {
+    @Test func completedImportReturnsToIdle() {
         let monitor = SyncMonitor()
         monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: true))
         monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: false))
         #expect(monitor.state == .idle)
-        #expect(monitor.hasCompletedFirstImport == true)
         #expect(monitor.lastSync != nil)
     }
 
@@ -61,29 +59,24 @@ import CloudKit
 
     // MARK: Error mapping
 
-    @Test func mapsQuotaExceededAsNonRetryable() {
+    @Test func mapsQuotaExceeded() {
         let error = NSError(domain: CKErrorDomain, code: CKError.Code.quotaExceeded.rawValue)
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.isRetryable == false)
-        #expect(info.message.contains("storage"))
+        #expect(SyncErrorMapper.describe(error).contains("storage"))
     }
 
-    @Test func mapsNetworkFailureAsRetryable() {
+    @Test func mapsNetworkFailure() {
         let error = NSError(domain: CKErrorDomain, code: CKError.Code.networkUnavailable.rawValue)
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.isRetryable == true)
+        #expect(SyncErrorMapper.describe(error).contains("network"))
     }
 
-    @Test func mapsNotAuthenticatedAsNonRetryable() {
+    @Test func mapsNotAuthenticated() {
         let error = NSError(domain: CKErrorDomain, code: CKError.Code.notAuthenticated.rawValue)
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.isRetryable == false)
+        #expect(SyncErrorMapper.describe(error).contains("Sign in"))
     }
 
     @Test func mapsNonCloudKitErrorWithItsDescription() {
         let error = NSError(domain: "other", code: 7, userInfo: [NSLocalizedDescriptionKey: "disk gone"])
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.message == "disk gone")
+        #expect(SyncErrorMapper.describe(error) == "disk gone")
     }
 
     // MARK: Account mapping
@@ -93,18 +86,6 @@ import CloudKit
         #expect(AccountState(.noAccount) == .noAccount)
         #expect(AccountState(.restricted) == .restricted)
         #expect(AccountState(.couldNotDetermine) == .couldNotDetermine)
-    }
-
-    // MARK: Router
-
-    @Test func routerSelectAndReset() {
-        let router = AppRouter()
-        #expect(router.selection == nil)
-        let id = UUID()
-        router.select(id)
-        #expect(router.selection == id)
-        router.reset()
-        #expect(router.selection == nil)
     }
 
     // MARK: Composed display state

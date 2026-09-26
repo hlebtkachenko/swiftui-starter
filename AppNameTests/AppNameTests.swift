@@ -109,22 +109,9 @@ struct AppNameStoreTests {
     }
 }
 
-/// Pure `CKShare` role/permission mapping (ADR-0006) and the
-/// in-memory-store guard. Headless: no CloudKit network, no iCloud account.
+/// The in-memory-store sharing guard. Headless: no CloudKit network, no iCloud account.
 @MainActor
-struct FamilySharingMappingTests {
-    @Test func shareOwnerMapsToAdmin() {
-        #expect(FamilyRole(.owner) == .admin)
-        #expect(FamilyRole(.privateUser) == .member)
-        #expect(FamilyRole(.publicUser) == .member)
-    }
-
-    @Test func permissionMapping() {
-        #expect(SharePermission(.readOnly) == .readOnly)
-        #expect(SharePermission(.readWrite) == .readWrite)
-        #expect(SharePermission(.none) == .unknown)
-    }
-
+struct FamilySharingTests {
     @Test func sharingIsUnavailableOnTheInMemoryStore() async {
         let store = CoreDataAppNameStore(context: PersistenceController(inMemory: true).container.viewContext)
         await #expect(throws: AppNameStoreError.cloudKitUnavailable) {

@@ -15,9 +15,6 @@ import Observation
 final class SyncMonitor {
     private(set) var state: SyncState = .idle
     private(set) var lastSync: Date?
-    /// Whether the first CloudKit import has finished. Lets a screen tell "new and
-    /// empty" apart from "empty because the first sync has not landed yet".
-    private(set) var hasCompletedFirstImport = false
 
     private var activePhases: Set<CloudSyncEvent.Kind> = []
     private var lastErrorMessage: String?
@@ -47,7 +44,6 @@ final class SyncMonitor {
             activePhases.remove(event.kind)
             if event.errorDescription == nil {
                 lastSync = Date()
-                if event.kind == .importData { hasCompletedFirstImport = true }
             }
         }
         lastErrorMessage = event.errorDescription
@@ -56,7 +52,7 @@ final class SyncMonitor {
 
     /// Surface a store-load failure that would otherwise be swallowed at startup.
     func report(storeLoadError: Error) {
-        lastErrorMessage = SyncErrorMapper.describe(storeLoadError).message
+        lastErrorMessage = SyncErrorMapper.describe(storeLoadError)
         recomputeState()
     }
 

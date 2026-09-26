@@ -31,12 +31,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         configuration.delegateClass = SceneDelegate.self
         return configuration
     }
-
-    // Fallback for the non-scene delivery path.
-    func application(_ application: UIApplication,
-                     userDidAcceptCloudKitShareWith metadata: CKShare.Metadata) {
-        acceptAppNameShare(metadata)
-    }
 }
 
 /// Scene-based apps (SwiftUI uses scenes) receive an accepted CloudKit share

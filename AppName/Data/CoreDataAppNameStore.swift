@@ -149,7 +149,8 @@ final class CoreDataAppNameStore: AppNameStore {
 /// a provisioned container and an iCloud account, so they run on device, not in
 /// headless tests. They throw `cloudKitUnavailable` when the store has no
 /// container (the in-memory test double).
-extension CoreDataAppNameStore: AppNameFamilySharing {
+extension CoreDataAppNameStore {
+    /// Create a `CKShare` over a wishlist's hierarchy.
     func shareWishlist(id: UUID) async throws -> CKShare {
         guard let container else { throw AppNameStoreError.cloudKitUnavailable }
         guard let list = try fetchWishlist(id) else { throw AppNameStoreError.wishlistNotFound(id) }
@@ -157,17 +158,14 @@ extension CoreDataAppNameStore: AppNameFamilySharing {
         return share
     }
 
+    /// The existing share for a wishlist, if it is already shared.
     func existingShare(forWishlist id: UUID) throws -> CKShare? {
         guard let container else { throw AppNameStoreError.cloudKitUnavailable }
         guard let list = try fetchWishlist(id) else { throw AppNameStoreError.wishlistNotFound(id) }
         return try container.fetchShares(matching: [list.objectID])[list.objectID]
     }
 
-    func members(forWishlist id: UUID) throws -> [FamilyMember] {
-        guard let share = try existingShare(forWishlist: id) else { return [] }
-        return share.participants.map(FamilyMember.init)
-    }
-
+    /// Accept an invitation received from the system share flow.
     func acceptShare(_ metadata: CKShare.Metadata) async throws {
         guard let container, let store = sharedStore(container) else {
             throw AppNameStoreError.cloudKitUnavailable
