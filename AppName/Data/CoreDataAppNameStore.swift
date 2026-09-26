@@ -36,8 +36,7 @@ final class CoreDataAppNameStore: AppNameStore {
 
     func deleteWishlist(id: UUID) throws {
         guard let mo = try fetchWishlist(id) else { throw AppNameStoreError.wishlistNotFound(id) }
-        context.delete(mo)
-        try save()
+        try delete([mo])
     }
 
     // MARK: Items
@@ -65,8 +64,25 @@ final class CoreDataAppNameStore: AppNameStore {
 
     func deleteItem(id: UUID) throws {
         guard let mo = try fetchItem(id) else { throw AppNameStoreError.itemNotFound(id) }
-        context.delete(mo)
+        try delete([mo])
+    }
+
+    // MARK: Objects shown by the views
+
+    /// Delete objects the views already hold, by identity rather than by `id`.
+    func delete(_ objects: [NSManagedObject]) throws {
+        objects.forEach(context.delete)
         try save()
+    }
+
+    /// Whether the user may change this object: `false` on a share they joined
+    /// read-only. Always `true` without CloudKit.
+    func canUpdate(_ object: NSManagedObject) -> Bool {
+        container?.canUpdateRecord(forManagedObjectWith: object.objectID) ?? true
+    }
+
+    func canDelete(_ object: NSManagedObject) -> Bool {
+        container?.canDeleteRecord(forManagedObjectWith: object.objectID) ?? true
     }
 
     // MARK: Saving and fetching

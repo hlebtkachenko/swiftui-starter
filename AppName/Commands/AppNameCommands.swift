@@ -13,7 +13,7 @@ struct AppNameCommands: Commands {
         // independent of any particular screen.
         CommandGroup(after: .newItem) {
             Button("New List") {
-                _ = try? environment.store.createWishlist(title: "New List")
+                environment.write("create a list") { try $0.createWishlist(title: "New List") }
             }
             .keyboardShortcut("n", modifiers: .command)
         }

@@ -3,26 +3,28 @@ import CoreData
 import OSLog
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var context
     @Environment(AppEnvironment.self) private var environment
     @FetchRequest(fetchRequest: WishlistMO.fetchAllRequest()) private var wishlists: FetchedResults<WishlistMO>
-    @State private var selection: UUID?
-
-    private var store: CoreDataAppNameStore { CoreDataAppNameStore(context: context) }
+    @State private var selection: NSManagedObjectID?
 
     var body: some View {
         NavigationSplitView {
             List(selection: $selection) {
-                ForEach(wishlists, id: \.listID) { list in
-                    Text(list.title ?? "Untitled").tag(list.listID)
+                ForEach(wishlists, id: \.objectID) { list in
+                    Text(list.title ?? "Untitled")
+                        .tag(list.objectID)
+                        .deleteDisabled(!environment.store.canDelete(list))
                 }
-                .onDelete(perform: deleteWishlists)
+                .onDelete { offsets in
+                    let lists = offsets.map { wishlists[$0] }
+                    environment.write("delete a list") { try $0.delete(lists) }
+                }
             }
             .navigationTitle("Wishlists")
             .toolbar {
                 ToolbarItem {
                     Button("Add list", systemImage: "plus") {
-                        _ = try? store.createWishlist(title: "New list")
+                        environment.write("create a list") { try $0.createWishlist(title: "New list") }
                     }
                 }
                 ToolbarItem(placement: .status) {
@@ -30,62 +32,64 @@ struct ContentView: View {
                 }
             }
         } detail: {
-            if let selection, let list = wishlists.first(where: { $0.listID == selection }) {
-                WishlistDetailView(wishlistID: selection, title: list.title ?? "Untitled")
+            if let list = wishlists.first(where: { $0.objectID == selection }) {
+                WishlistDetailView(list: list)
             } else {
                 ContentUnavailableView("Select a list", systemImage: "gift")
             }
         }
     }
-
-    private func deleteWishlists(_ offsets: IndexSet) {
-        for index in offsets {
-            try? store.deleteWishlist(id: wishlists[index].listID)
-        }
-    }
 }
 
 private struct WishlistDetailView: View {
-    @Environment(\.managedObjectContext) private var context
     @Environment(AppEnvironment.self) private var environment
-    private let wishlistID: UUID
-    private let title: String
+    @ObservedObject private var list: WishlistMO
     @FetchRequest private var items: FetchedResults<WishItemMO>
 
-    init(wishlistID: UUID, title: String) {
-        self.wishlistID = wishlistID
-        self.title = title
+    init(list: WishlistMO) {
+        self.list = list
         let request = NSFetchRequest<WishItemMO>(entityName: AppNameModel.Entity.wishItem)
-        request.predicate = NSPredicate(format: "wishlist.id == %@", wishlistID as CVarArg)
+        request.predicate = NSPredicate(format: "wishlist == %@", list)
         request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
         _items = FetchRequest(fetchRequest: request)
     }
 
-    private var store: CoreDataAppNameStore { CoreDataAppNameStore(context: context) }
+    /// `false` on a list shared to this user read-only.
+    private var canEdit: Bool { environment.store.canUpdate(list) }
 
     var body: some View {
         List {
-            ForEach(items, id: \.itemID) { item in
+            ForEach(items, id: \.objectID) { item in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.title ?? "Untitled")
                     if let note = item.note, !note.isEmpty {
                         Text(note).font(.caption).foregroundStyle(.secondary)
                     }
                 }
+                .accessibilityElement(children: .combine)
             }
+            .onDelete { offsets in
+                let doomed = offsets.map { items[$0] }
+                environment.write("delete an item") { try $0.delete(doomed) }
+            }
+            .deleteDisabled(!canEdit)
         }
-        .navigationTitle(title)
+        .navigationTitle(list.title ?? "Untitled")
         .toolbar {
-            ToolbarItem {
-                Button("Add item", systemImage: "plus") {
-                    _ = try? store.addItem(to: wishlistID, title: "New item", note: nil, url: nil)
+            if canEdit, let id = list.id {
+                ToolbarItem {
+                    Button("Add item", systemImage: "plus") {
+                        environment.write("add an item") {
+                            try $0.addItem(to: id, title: "New item", note: nil, url: nil)
+                        }
+                    }
                 }
             }
             // Temporary: the system share sheet, so a second iCloud account can be
             // invited. Hidden while sync is off.
             if let shareItem {
                 ToolbarItem {
-                    ShareLink(item: shareItem, preview: SharePreview(title)) {
+                    ShareLink(item: shareItem, preview: SharePreview(list.title ?? "Untitled")) {
                         Label("Share", systemImage: "person.crop.circle.badge.plus")
                     }
                 }
@@ -94,8 +98,9 @@ private struct WishlistDetailView: View {
     }
 
     private var shareItem: CloudShareItem? {
+        guard let id = list.id else { return nil }
         do {
-            return try environment.store.shareItem(forWishlist: wishlistID)
+            return try environment.store.shareItem(forWishlist: id)
         } catch {
             Log.sharing.error("share lookup failed: \(error.localizedDescription, privacy: .public)")
             return nil

@@ -34,7 +34,7 @@ final class AppEnvironment {
         }
     }
 
-    private var started = false
+    @ObservationIgnored private var started = false
 
     /// Start the live monitors. Every window calls this; only the first call runs.
     func start() {
@@ -60,6 +60,16 @@ final class AppEnvironment {
         }
     }
 
+    /// Run a store write from a view or command. The store has already rolled back
+    /// a failed save; this records the failure instead of dropping it.
+    func write(_ action: String, _ body: (CoreDataAppNameStore) throws -> Void) {
+        do {
+            try body(store)
+        } catch {
+            Log.persistence.error("could not \(action, privacy: .public): \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     /// Accept a share invitation into the shared store; a failure shows in the sync status.
     func acceptShare(_ metadata: CKShare.Metadata) {
         Log.sharing.notice("accepting CloudKit share")
@@ -82,7 +92,7 @@ final class AppEnvironment {
     private func seedSyncProbeIfRequested() {
         guard let title = UserDefaults.standard.string(forKey: "seedProbe"), !title.isEmpty else { return }
         Log.app.notice("seeding sync probe wishlist: \(title, privacy: .public)")
-        _ = try? store.createWishlist(title: title)
+        write("seed the sync probe") { try $0.createWishlist(title: title) }
     }
     #endif
 

@@ -11,9 +11,6 @@ nonisolated final class WishlistMO: NSManagedObject {
     @NSManaged var createdAt: Date?
     @NSManaged var items: NSSet?
 
-    /// Non-optional identity for SwiftUI `ForEach` / `List` selection.
-    var listID: UUID { id ?? UUID() }
-
     static func fetchAllRequest() -> NSFetchRequest<WishlistMO> {
         let request = NSFetchRequest<WishlistMO>(entityName: AppNameModel.Entity.wishlist)
         request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
@@ -28,6 +25,4 @@ nonisolated final class WishItemMO: NSManagedObject {
     @NSManaged var urlString: String?
     @NSManaged var createdAt: Date?
     @NSManaged var wishlist: WishlistMO?
-
-    var itemID: UUID { id ?? UUID() }
 }
