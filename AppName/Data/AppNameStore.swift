@@ -59,6 +59,11 @@ final class AppNameStore {
         container?.canUpdateRecord(forManagedObjectWith: object.objectID) ?? true
     }
 
+    /// Whether the user may delete this object. Always `true` without CloudKit.
+    func canDelete(_ object: NSManagedObject) -> Bool {
+        container?.canDeleteRecord(forManagedObjectWith: object.objectID) ?? true
+    }
+
     // MARK: Sharing (CKShare)
 
     // These need a provisioned container and an iCloud account, so they run on

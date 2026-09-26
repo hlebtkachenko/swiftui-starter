@@ -15,9 +15,9 @@ struct ContentView: View {
                         .tag(folder.objectID)
                         .contextMenu {
                             Button("Delete", systemImage: "trash", role: .destructive) { delete(folder) }
-                                .disabled(!environment.store.canEdit(folder))
+                                .disabled(!environment.store.canDelete(folder))
                         }
-                        .deleteDisabled(!environment.store.canEdit(folder))
+                        .deleteDisabled(!environment.store.canDelete(folder))
                 }
                 .onDelete { offsets in
                     offsets.map { folders[$0] }.forEach(delete)
@@ -72,12 +72,12 @@ private struct FolderDetailView: View {
         List {
             ForEach(items, id: \.objectID) { item in
                 Text(item.title ?? "")
+                    .deleteDisabled(!environment.store.canDelete(item))
             }
             .onDelete { offsets in
                 let doomed = offsets.map { items[$0] }
                 environment.write("delete an item") { store in try doomed.forEach(store.delete) }
             }
-            .deleteDisabled(!canEdit)
         }
         .overlay {
             if items.isEmpty {
