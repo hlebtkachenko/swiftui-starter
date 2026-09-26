@@ -34,8 +34,12 @@ final class AppEnvironment {
         }
     }
 
-    /// Start the live monitors. Call once, after the first scene appears.
+    private var started = false
+
+    /// Start the live monitors. Every window calls this; only the first call runs.
     func start() {
+        guard !started else { return }
+        started = true
         sync.start()
         connectivity.start()
         receiveMetrics()
