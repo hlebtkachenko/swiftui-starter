@@ -11,7 +11,7 @@ Editing the Xcode project file by hand is historically painful for both people a
 - Keep a single `AppName.xcodeproj`. It already uses Xcode 16+ filesystem-synchronized groups (`PBXFileSystemSynchronizedRootGroup`) for the `AppName`, `AppNameTests`, and `AppNameUITests` folders, so adding a Swift file needs no project-file edit and creates no per-file merge conflict; agents add files simply by writing into the folder.
 - Do not adopt Tuist or XcodeGen, since they would replace a working native feature with a third-party tool.
 - Keep local SPM packages optional, justified only by build time or module boundaries as the app grows, never as a workaround for project-file churn.
-- Agent ergonomics (amended 2026-09-26): `AGENTS.md` is the single agent-instructions file, read by Claude Code and Codex alike, with no `CLAUDE.md` copy or symlink; `ARCHITECTURE.md` at the root maps the code; CodeGraph indexes the sources into a gitignored `.codegraph/` and is exposed through a project-scoped `.mcp.json` server, built per Conductor workspace by the setup script in `.conductor/settings.toml`.
+- Agent ergonomics (amended 2026-09-26): `AGENTS.md` is the single agent-instructions file, read by Claude Code and Codex alike, with no `CLAUDE.md` copy or symlink (Claude Code reads `AGENTS.md` directly from version 2.1.277, when the repo has no `CLAUDE.md` or `.claude/CLAUDE.md`; a personal, gitignored `CLAUDE.local.md` can sit alongside it); `ARCHITECTURE.md` at the root maps the code; CodeGraph indexes the sources into a gitignored `.codegraph/` and is exposed through a project-scoped `.mcp.json` server, built per Conductor workspace by the setup script in `.conductor/settings.toml`.
 
 ## Consequences
 

@@ -16,7 +16,7 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ### Fixed
 - MetricKit reports come through the async `MetricManager`, fixing a main-actor isolation trap in the delegate callback.
-- Sharing reuses an existing `CKShare` instead of creating a new one each time, and the share button shows only when sync is on.
+- Sharing reuses an existing `CKShare` instead of creating a new one each time, including a second tap before the first share has synced (the prepare path looks up existing shares first), and the share button shows only when sync is on.
 - Sync errors persist until an event succeeds, and a store-load error keeps precedence in the status chip.
 - A failed save rolls back the context and the error is logged instead of swallowed.
 - Read-only share participants can no longer add, edit, or delete.

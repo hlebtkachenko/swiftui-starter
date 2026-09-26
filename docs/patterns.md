@@ -23,7 +23,7 @@ Swift and Apple-platform conventions, plus reusable recipes distilled from Apple
 
 - Drive navigation from one screen enum (`Destination`): `Hashable, Identifiable, CaseIterable`, each case yielding both its sidebar label and its detail view.
 - `ContentView` reads a `prefersTabNavigation` environment flag (derived from idiom and size class) and switches between a `TabView` for compact width (iPhone) and a `NavigationSplitView { sidebar } detail: { stack }` for regular width (iPad, Mac), over the same data.
-- Register `.navigationDestination(for:)` per screen and type it on the entity's stable ID (a UUID or String), not on a live `NSManagedObject`; resolve the ID to an object inside the destination so `NavigationPath` stays value-safe.
+- Register `.navigationDestination(for:)` per screen and type it on the object's `NSManagedObjectID` (the template's identity; it has no `id` attribute), not on a live `NSManagedObject`; resolve the ID to an object inside the destination so `NavigationPath` stays value-safe.
 - A card or row that navigates needs a compact-versus-regular split: a `NavigationLink(value:)` on compact iPhone, but a sidebar `selection` binding on iPad and Mac so the split view responds (Food Truck's `CardNavigationHeader`). Use a width-threshold reader to make the compact/wide decision in one place.
 
 ## Core Data previews and tests
