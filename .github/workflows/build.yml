@@ -66,6 +66,14 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
           xcodebuild -version | grep -q '^Xcode 27\.' || { echo "Xcode 27 not found on this runner"; exit 1; }
+      - name: Write Secrets.xcconfig
+        env:
+          # Optional repo variable (not a secret); unset keeps the com.example default.
+          BUNDLE_ID_PREFIX: ${{ vars.BUNDLE_ID_PREFIX }}
+        run: |
+          if [ -n "$BUNDLE_ID_PREFIX" ]; then
+            printf 'BUNDLE_ID_PREFIX = %s\n' "$BUNDLE_ID_PREFIX" > Secrets.xcconfig
+          fi
       - name: Unit tests on macOS
         run: |
           xcodebuild test \

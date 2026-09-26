@@ -104,6 +104,8 @@ jobs:
           # an unset secret simply writes an empty value. Set it only to trace a
           # signed build.
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+          # Optional repo variable (not a secret); unset keeps the com.example default.
+          BUNDLE_ID_PREFIX: ${{ vars.BUNDLE_ID_PREFIX }}
         run: |
           # Filesystem-synchronized groups don't enumerate sources in the pbxproj,
           # so the autobuilder finds no target; build explicitly. Build the leanest
@@ -113,6 +115,9 @@ jobs:
           # without hunting for a device. These trim a few minutes; the tracer's
           # system-module precompile is the irreducible floor (see header).
           printf 'DEVELOPMENT_TEAM = %s\n' "$DEVELOPMENT_TEAM" > Secrets.xcconfig
+          if [ -n "$BUNDLE_ID_PREFIX" ]; then
+            printf 'BUNDLE_ID_PREFIX = %s\n' "$BUNDLE_ID_PREFIX" >> Secrets.xcconfig
+          fi
           xcodebuild build \
             -scheme AppName \
             -destination 'generic/platform=macOS' \
