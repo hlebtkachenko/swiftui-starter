@@ -41,7 +41,7 @@ Enable the pre-commit hook once per clone: `git config core.hooksPath .githooks`
 - `Shared.xcconfig` sets `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS`, so any new warning fails the build.
 - Docs: each topic has one home, mapped in [docs/README.md](docs/README.md). `check-duplication.sh` fails on any line of 45+ characters repeated verbatim across Markdown files, and `check-ownership-map.sh` fails when a new `.md` file is missing from the map.
 - Accepted ADRs change only by a dated amendment or a superseding record ([docs/adr/README.md](docs/adr/README.md)).
-- Required merge checks: gitleaks, guard, pr-check (Conventional Commits title + description), CodeQL (~17 min macOS build). Detail and the release steps: [docs/ci-cd.md](docs/ci-cd.md).
+- Required merge checks: gitleaks, guard, pr-check (Conventional Commits title + description). CodeQL (~17 min macOS build) is suspended as a gate until its tracer works with Xcode 27; it probes weekly and opens a restore PR itself. Detail and the release steps: [docs/ci-cd.md](docs/ci-cd.md).
 - Update `STATE.md` and `CHANGELOG.md` (`## [Unreleased]`) when a change affects them.
 
 <!-- CODEGRAPH_START -->

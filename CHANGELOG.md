@@ -8,6 +8,7 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ### Changed
 - **Breaking:** the deployment floor is now OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. Apps that must run on OS 26 should stay on 0.2.x. ADR-0001 and ADR-0002 are amended; ADR-0008 and ADR-0010 note that the OS 27 APIs they mention are now within the floor.
+- CodeQL is no longer a required PR check: its Swift tracer cannot build with the arm64-only Xcode 27 helpers on GitHub's runner. It runs weekly and on demand as a probe, and its first green run opens a PR that restores the gate.
 - Agent setup follows one file: `AGENTS.md` holds the agent instructions and the `CLAUDE.md` symlink is removed. `ARCHITECTURE.md` maps the code. ADR-0015 is amended accordingly.
 - Docs trimmed to one home per topic: `docs/engineering.md` is folded into `docs/patterns.md`, the CI gate tables in `docs/ci-cd.md` are merged, the research report is marked historical, and `README.md` / `STATE.md` point to the guide and `ARCHITECTURE.md` instead of repeating them.
 

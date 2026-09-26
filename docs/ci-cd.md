@@ -2,17 +2,21 @@
 
 ## Gates
 
-All run on GitHub-hosted runners, and every workflow uses `concurrency: cancel-in-progress`, so a newer commit supersedes an in-flight run. The first four are required checks on `main`.
+All run on GitHub-hosted runners, and every workflow uses `concurrency: cancel-in-progress`, so a newer commit supersedes an in-flight run. The first three are required checks on `main`; `codeql` is suspended as a gate (below).
 
 | Workflow | Required check | Runs on | Runner, cost | What it does |
 |----------|----------------|---------|--------------|--------------|
 | `gitleaks.yml` | Scan for secrets | PR, push to `main` | ubuntu, ~10 s | Secret scan over full history, redacted output. |
 | `guard.yml` | Block secrets and private files | PR, push to `main` | ubuntu, ~15 s | The `.github/scripts/check-*.sh` guards: secrets/private files, private keys, oversized files, personal data, dead links, duplicate docs, ownership map. See [security.md](security.md). |
 | `pr-check.yml` | PR title and description | PR only | ubuntu, ~5 s | Conventional Commits title and a non-trivial description. |
-| `codeql.yml` | Analyze Swift | PR, push to `main`, weekly (Mon 04:23 UTC), manual | **macOS**, ~17 min | Swift security and quality scan. A cheap Ubuntu `detect` job decides `has_swift` before the macOS `analyze` job runs. |
+| `codeql.yml` | - (suspended) | weekly (Mon 04:23 UTC), manual | **macOS**, ~17 min | Swift security and quality scan. A cheap Ubuntu `detect` job decides `has_swift` before the macOS `analyze` job runs. |
 | `release-check.yml` | - | `v*` tag push | ubuntu, ~10 s | Validates `vX.Y.Z` and a matching `CHANGELOG.md` entry, then publishes the GitHub release. |
 
 `push` is scoped to `main` so a same-repo PR branch is scanned once (through `pull_request`), not twice.
+
+### CodeQL on Xcode 27: suspended as a gate
+
+Since 2026-09-26 the `xcode-27` runner image ships Xcode's `swift-plugin-server` and `sandbox-exec` as arm64-only, while CodeQL's Swift tracer runs the build as x86_64, so every macro expansion fails with "Bad CPU type in executable". Pinning an older CodeQL bundle does not help, and the OS 27 floor rules out building on Xcode 26. Until the problem is fixed upstream, `codeql.yml` runs only weekly and on demand as a probe, and `Analyze Swift` is not a required check. The first green probe on `main` runs the `restore` job, which opens a PR that restores the `push` / `pull_request` triggers and the ruleset entry. That job needs Settings -> Actions -> "Allow GitHub Actions to create pull requests" enabled; after merging the PR, run `setup-branch-protection.sh`.
 
 ### Why CodeQL is slow, and why it gates anyway
 
@@ -23,7 +27,7 @@ CodeQL's Swift extractor needs a full build under its compiler tracer, and the t
 `main` is protected by a repository ruleset (not classic branch protection):
 
 - Pull request required (0 approvals; a solo owner cannot approve their own PR).
-- Required status checks: `Scan for secrets`, `Block secrets and private files`, `PR title and description`, `Analyze Swift` (CodeQL).
+- Required status checks: `Scan for secrets`, `Block secrets and private files`, `PR title and description` (`Analyze Swift` returns once CodeQL works on Xcode 27, see above).
 - Linear history, no deletion, no force-push.
 - The repository admin can bypass (use sparingly, e.g. an unblockable greenfield case).
 

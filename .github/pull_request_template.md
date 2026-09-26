@@ -26,4 +26,4 @@
 - [ ] Nothing private or not meant for a public repository is included.
 - [ ] `CHANGELOG.md` updated if user-facing; `STATE.md` updated if project state changed.
 - [ ] Scoped to the stated purpose, with no unrelated edits.
-- [ ] Required gates pass (gitleaks, guard, pr-check, CodeQL).
+- [ ] Required gates pass (gitleaks, guard, pr-check).
