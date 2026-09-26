@@ -15,7 +15,11 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 - The family wishlist example is replaced by a generic shared-collection example: `Folder` and `Item` Core Data entities (identity by object ID, `createdAt` as sort key, cascade delete), a system-component UI (split view, empty states, `ShareLink`), and no seed or sample data. `-seedProbe` now creates a folder. Old development stores from the previous model do not open; reinstall.
 - The store is one concrete `AppNameStore` class; the store protocol, value structs, and mapping layer are gone. ADR-0005, 0006, 0007, 0013, and 0016 are amended to drop the family framing.
 
+### Performance
+- The folder detail view looks up the folder's CloudKit share once per folder and after each finished sync, instead of on every view update.
+
 ### Fixed
+- Deleting the selected folder, on this device or another, clears the selection and shows the "No Folder Selected" placeholder.
 - MetricKit reports come through the async `MetricManager`, fixing a main-actor isolation trap in the delegate callback.
 - Sharing reuses an existing `CKShare` instead of creating a new one each time, including a second tap before the first share has synced (the prepare path looks up existing shares first), and the share button shows only when sync is on.
 - Sync errors persist until an event succeeds, and a store-load error keeps precedence in the status chip.
@@ -27,6 +31,7 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 - `ContentState`, `AppRouter`, the `FamilySharing` protocol and member/role types, `SampleData`, the `GiftClaim` feature, the store protocol, the dead app-delegate share handler, and unused privacy reasons and build settings.
 
 ### Added
+- The bundle ID prefix is a build setting, `BUNDLE_ID_PREFIX`, instead of a hardcoded value: set it in the gitignored `Secrets.xcconfig` and as a GitHub repository variable that CI writes into that file. Without it, bundle IDs fall back to `com.example.appname`. The log subsystem now follows the bundle ID.
 - A `build` workflow with the required `Build and test` check: macOS unit tests and an iOS Simulator build-for-testing on every PR that touches Swift or project files (docs-only PRs skip the macOS job).
 - The weekly CodeQL probe re-enables itself on each run, so GitHub's 60-day inactivity rule is less likely to switch it off.
 - CodeGraph code index for agents: project-scoped MCP server in `.mcp.json`, `mcp__codegraph__*` allowed in `.claude/settings.json`, a Conductor setup script that builds the gitignored `.codegraph/` index per workspace. ADR-0004 records it as developer tooling, not an app dependency.

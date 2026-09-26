@@ -34,6 +34,7 @@ Enable the pre-commit hook once per clone: `git config core.hooksPath .githooks`
 
 - New Swift files need no `project.pbxproj` edit: the targets use filesystem-synchronized groups. Do not propose XcodeGen or Tuist (ADR-0015).
 - Signing team lives in the gitignored `Secrets.xcconfig` (from `Secrets.xcconfig.example`), included by `Shared.xcconfig`.
+- Never hardcode the bundle ID prefix: bundle IDs and the iCloud container use `$(BUNDLE_ID_PREFIX)`, set in `Secrets.xcconfig` locally and the `BUNDLE_ID_PREFIX` repo variable in CI (default `com.example`).
 - CloudKit is off by default: `PersistenceController.cloudKitContainerIdentifier` is `nil`, so the app runs on a local store. Set it only after the container exists in the Developer portal and matches `com.apple.developer.icloud-container-identifiers` in `AppName.entitlements` (`Info.plist` needs nothing): an unprovisioned container crashes at launch.
 - Every write goes through the concrete `AppNameStore` class; its `save()` rolls back and rethrows. Keep CloudKit calls inside the store and persistence types; tests use `PersistenceController(inMemory: true)` (ADR-0013).
 - Identity is `NSManagedObjectID` (no `id` attribute); selection and share closures capture the object ID, never the managed object.

@@ -47,9 +47,10 @@ The script creates the ruleset, or updates it in place if one named `main` alrea
 CI passes with **no repository secrets configured**, so a fresh copy is green out of the box:
 
 - `DEVELOPMENT_TEAM` (used by `codeql`) is optional - the analysis build disables code signing, so an unset value just writes an empty `Secrets.xcconfig`. Set it only to trace a signed build.
+- `BUNDLE_ID_PREFIX` is a repository variable, not a secret, read by `build` and `codeql`, which write it into `Secrets.xcconfig`. Unset, bundle IDs fall back to `com.example` (setup: [using-the-template.md](using-the-template.md#3-signing-and-bundle-id-prefix)).
 - `FORBIDDEN_STRINGS` (used by `guard`) is optional - the personal-data check runs its email scan regardless and only adds the private denylist when the secret is present.
 
-Neither secret is required to merge. Add them later as enhancements.
+None of these is required to merge. Add them later as enhancements.
 
 ## Versioning and releases
 

@@ -1,6 +1,6 @@
 # Using this template
 
-How to start a new app from this template. `AppName` is the placeholder; you replace it with your app's name. Bundle IDs default to `dev.hapd.appname`; keep the `dev.hapd` prefix or change it to your own.
+How to start a new app from this template. `AppName` is the placeholder; you replace it with your app's name. Bundle IDs are `$(BUNDLE_ID_PREFIX).appname`: the prefix is a build setting you set once (step 3), not part of the rename.
 
 ## 1. Get a copy
 
@@ -22,7 +22,7 @@ Without the template flag: create an empty repo (`gh repo create myapp --private
 
 ## 2. Rename `AppName` to your app
 
-From the repo root, set `NEW` (your app's name) and `LOWER` (its lowercase form, used in the bundle ID, the iCloud container, the log subsystem, and the support domain). This assumes you keep the `dev.hapd` prefix:
+From the repo root, set `NEW` (your app's name) and `LOWER` (its lowercase form, used in the bundle ID, the iCloud container, and the support domain):
 
 ```
 NEW=Myapp
@@ -41,19 +41,23 @@ git mv ${NEW}Tests/AppNameTests.swift ${NEW}Tests/${NEW}Tests.swift
 git mv ${NEW}UITests/AppNameUITestsLaunchTests.swift ${NEW}UITests/${NEW}UITestsLaunchTests.swift
 ```
 
-The `appname` -> `myapp` pass covers the bundle ID `dev.hapd.myapp`, the container `iCloud.dev.hapd.myapp`, the log subsystem, and the `myapp.hapd.dev` domain in the docs. To change the prefix too, replace `dev.hapd` in the same `perl` pass.
+The `appname` -> `myapp` pass turns the bundle ID into `$(BUNDLE_ID_PREFIX).myapp` and the container into `iCloud.$(BUNDLE_ID_PREFIX).myapp`. The log subsystem follows the bundle ID at run time.
 
-To rename to a different prefix, add it to the substitution, for example `s/dev\.hapd/com\.acme/g`.
+## 3. Signing and bundle ID prefix
 
-## 3. Signing
-
-Copy the example and set your Apple Developer Team ID. `Secrets.xcconfig` is gitignored and never committed:
+Copy the example, then set your Apple Developer Team ID and your reverse-DNS bundle ID prefix. `Secrets.xcconfig` is gitignored and never committed:
 
 ```
 cp Secrets.xcconfig.example Secrets.xcconfig
 ```
 
-Edit `Secrets.xcconfig` and replace `YOUR_TEAM_ID`.
+Edit `Secrets.xcconfig`: replace `YOUR_TEAM_ID`, and set `BUNDLE_ID_PREFIX` (for example `com.acme`). Without the file the build falls back to `com.example` from `Shared.xcconfig`, so a fresh clone still builds.
+
+Give CI the same prefix once per repo as a repository variable (not a secret); the workflows write it into `Secrets.xcconfig` before building:
+
+```
+gh variable set BUNDLE_ID_PREFIX --body com.acme
+```
 
 ## 4. Build
 
@@ -80,4 +84,4 @@ See [ci-cd.md](ci-cd.md) for what the ruleset enforces. CI passes with no reposi
 
 - Replace the Folder / Item example in `${NEW}/Data` (model, store) and `${NEW}/ContentView.swift` with your own model and views. The app spine in `${NEW}/Core` is domain-agnostic; keep it.
 - Rewrite `README.md`, `STATE.md`, and `CHANGELOG.md` for your app. Revisit any ADR in `docs/adr/` that does not fit, and update the record.
-- CloudKit is **off** by default (`cloudKitContainerIdentifier` is `nil`, so the app runs as a local store). To enable sync: provision an iCloud container, make sure its identifier matches `com.apple.developer.icloud-container-identifiers` in `${NEW}.entitlements` (the rename pass already sets `iCloud.dev.hapd.${LOWER}`), then set `cloudKitContainerIdentifier` in `PersistenceController.swift` to it. `Info.plist` needs no change. Deploy the CloudKit schema Development -> Production before the first external-TestFlight or production build (ADR-0014).
+- CloudKit is **off** by default (`cloudKitContainerIdentifier` is `nil`, so the app runs as a local store). To enable sync: provision an iCloud container, make sure its identifier matches `com.apple.developer.icloud-container-identifiers` in `${NEW}.entitlements` (it is `iCloud.$(BUNDLE_ID_PREFIX).${LOWER}`, expanded at build time), then set `cloudKitContainerIdentifier` in `PersistenceController.swift` to it. `Info.plist` needs no change. Deploy the CloudKit schema Development -> Production before the first external-TestFlight or production build (ADR-0014).
