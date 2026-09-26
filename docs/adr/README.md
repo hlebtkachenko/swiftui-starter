@@ -13,7 +13,7 @@ The durable record of AppName's load-bearing technical decisions: what we chose,
 | [0003](0003-ui-state-architecture.md) | UI and state architecture |
 | [0004](0004-dependency-policy.md) | Dependency policy |
 | [0005](0005-data-persistence-sync-offline.md) | Data, persistence, sync, and offline |
-| [0006](0006-sharing-access-control-roles.md) | Sharing, access control, and family roles |
+| [0006](0006-sharing-access-control-roles.md) | Sharing, access control, and roles |
 | [0007](0007-file-attachment-storage.md) | File and attachment storage |
 | [0008](0008-in-app-search.md) | In-app search |
 | [0009](0009-notifications.md) | Notifications |

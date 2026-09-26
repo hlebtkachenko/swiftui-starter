@@ -16,14 +16,14 @@ The single home for engineering security rules. `AGENTS.md` carries the short bo
 
 ## Privacy (the app)
 
-AppName holds personal and family data. Build for minimal collection:
+Each app built from the template decides what personal data it holds; build for minimal collection:
 
 - Collect the **minimum** needed; default to **on-device** storage and sync only with explicit user setup.
 - **No third-party analytics, advertising, or tracking SDKs.** No IDFA. No silent telemetry.
-- Encrypt sensitive data at rest; use the Keychain for credentials. **Never log PII or family content,** and scrub crash reports.
+- Encrypt sensitive data at rest; use the Keychain for credentials. **Never log PII or user content,** and scrub crash reports.
 - App Store privacy labels and any privacy policy must match the real data flows exactly.
-- **Children and minors:** a family space may include child users. Comply with COPPA, GDPR for children, and Apple's Kids guidelines. Never behaviorally profile minors.
-- **Family sharing access control:** sharing is opt-in per item, members can revoke access, and one member must never silently expose another member's data.
+- **Children and minors:** if an app may have child users, decide it per app before release and follow the applicable rules (COPPA, GDPR for children, Apple's Kids Category guidelines).
+- **Sharing access control:** sharing is opt-in per shared root object, participants can be removed, and one participant must never silently expose another's data.
 - **Retention, deletion, export:** support user-initiated data deletion and export (GDPR erasure and portability, and Apple's required in-app account deletion). Do not retain data longer than needed.
 - A user-facing privacy policy is required before the first release.
 

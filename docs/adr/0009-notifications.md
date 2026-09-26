@@ -4,7 +4,7 @@
 
 ## Context
 
-Two distinct needs: keep devices in sync, and alert a person when something relevant happens (a member added or claimed something). With no push backend, both must run on Apple's infrastructure.
+Two distinct needs: keep devices in sync, and alert a person when something relevant happens (for example a participant added something). With no push backend, both must run on Apple's infrastructure.
 
 ## Decision
 

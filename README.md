@@ -4,12 +4,12 @@ A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, M
 
 `AppName` is a placeholder. Rename it to your app, drop in your own domain, and ship.
 
-> **Status:** template. Ships a working spine plus one example feature (a family wishlist on CloudKit + `CKShare`). See [STATE.md](STATE.md).
+> **Status:** template. Ships a working spine plus a generic Folder / Item example shared through CloudKit + `CKShare`. See [STATE.md](STATE.md).
 
 ## What you get
 
 - A domain-agnostic app spine: composition root, router, sync and connectivity monitors, shared commands, macOS Settings, `OSLog` and MetricKit, a privacy manifest.
-- A CloudKit + `CKShare` data layer behind a store protocol with an in-memory test double, shown through the example feature you replace.
+- A CloudKit + `CKShare` data layer (one store class, an in-memory store for tests), shown through a generic Folder / Item example with no seed data, which you replace.
 - Swift Testing for logic, XCTest for UI.
 - CI gates (gitleaks, guard, pr-check, CodeQL), a reproducible `main` ruleset, and founding [Architecture Decision Records](docs/adr/README.md).
 

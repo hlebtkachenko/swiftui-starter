@@ -4,7 +4,7 @@
 
 ## Context
 
-AppName serves Apple families across iPhone, iPad, and Mac and wants the current design language. Liquid Glass arrived with the OS 26 SDK and does not back-deploy, so the design ambition sets the platform floor; the template tracks the newest OS generation, which is OS 27 as of this amendment.
+AppName targets iPhone, iPad, and Mac and wants the current design language. Liquid Glass arrived with the OS 26 SDK and does not back-deploy, so the design ambition sets the platform floor; the template tracks the newest OS generation, which is OS 27 as of this amendment.
 
 ## Decision
 

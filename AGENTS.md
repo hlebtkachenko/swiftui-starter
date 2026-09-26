@@ -1,6 +1,6 @@
 # AGENTS.md
 
-SwiftUI starter template for native multiplatform apps (iPhone, iPad, Mac), App Store and TestFlight shaped. `AppName` is a placeholder renamed per app ([docs/using-the-template.md](docs/using-the-template.md)). A domain-agnostic spine plus one example feature (a family wishlist) that exercises CloudKit + `CKShare`; the example is meant to be replaced. Code map: [ARCHITECTURE.md](ARCHITECTURE.md). State: [STATE.md](STATE.md). Decisions: [docs/adr/](docs/adr/README.md).
+SwiftUI starter template for native multiplatform apps (iPhone, iPad, Mac), App Store and TestFlight shaped. `AppName` is a placeholder renamed per app ([docs/using-the-template.md](docs/using-the-template.md)). A domain-agnostic spine plus a generic shared-collection example (Folder / Item) that exercises CloudKit + `CKShare`, with no seed data; replace the example with the app's own model. Code map: [ARCHITECTURE.md](ARCHITECTURE.md). State: [STATE.md](STATE.md). Decisions: [docs/adr/](docs/adr/README.md).
 
 Public repo, proprietary license: every file and CI log is world-readable.
 
@@ -35,8 +35,10 @@ Enable the pre-commit hook once per clone: `git config core.hooksPath .githooks`
 - New Swift files need no `project.pbxproj` edit: the targets use filesystem-synchronized groups. Do not propose XcodeGen or Tuist (ADR-0015).
 - Signing team lives in the gitignored `Secrets.xcconfig` (from `Secrets.xcconfig.example`), included by `Shared.xcconfig`.
 - CloudKit is off by default: `PersistenceController.cloudKitContainerIdentifier` is `nil`, so the app runs on a local store. Set it only after the container exists in the Developer portal (and in `AppName.entitlements` and `Info.plist`): an unprovisioned container crashes at launch.
-- App logic depends on the `AppNameStore` protocol, never on Core Data types; tests run against an in-memory store. Keep it that way (ADR-0013).
-- Gift claims reference items by `UUID`, never by relationship, so a claim never joins the owner-visible share (ADR-0006).
+- Every write goes through the concrete `AppNameStore` class; its `save()` rolls back and rethrows. Keep CloudKit calls inside the store and persistence types; tests use `PersistenceController(inMemory: true)` (ADR-0013).
+- Identity is `NSManagedObjectID` (no `id` attribute); selection and share closures capture the object ID, never the managed object.
+- Gate edits on `store.canEdit(_:)`: share participants may be read-only.
+- `Shared.xcconfig` sets `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS`, so any new warning fails the build.
 - Docs: each topic has one home, mapped in [docs/README.md](docs/README.md). `check-duplication.sh` fails on any line of 45+ characters repeated verbatim across Markdown files, and `check-ownership-map.sh` fails when a new `.md` file is missing from the map.
 - Accepted ADRs change only by a dated amendment or a superseding record ([docs/adr/README.md](docs/adr/README.md)).
 - Required merge checks: gitleaks, guard, pr-check (Conventional Commits title + description), CodeQL (~17 min macOS build). Detail and the release steps: [docs/ci-cd.md](docs/ci-cd.md).

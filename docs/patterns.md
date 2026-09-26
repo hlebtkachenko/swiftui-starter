@@ -26,14 +26,12 @@ Swift and Apple-platform conventions, plus reusable recipes distilled from Apple
 - Register `.navigationDestination(for:)` per screen and type it on the entity's stable ID (a UUID or String), not on a live `NSManagedObject`; resolve the ID to an object inside the destination so `NavigationPath` stays value-safe.
 - A card or row that navigates needs a compact-versus-regular split: a `NavigationLink(value:)` on compact iPhone, but a sidebar `selection` binding on iPad and Mac so the split view responds (Food Truck's `CardNavigationHeader`). Use a width-threshold reader to make the compact/wide decision in one place.
 
-## Core Data previews and seed data
+## Core Data previews and tests
 
 Supports the in-memory test double in [ADR-0013](adr/0013-testing-strategy.md): previews and logic tests share one in-memory store instead of repeating setup.
 
-- Expose a `.appNameDataContainer(inMemory:)` `ViewModifier` that builds an `NSPersistentCloudKitContainer` with an in-memory store (a `/dev/null` store URL), seeds it on appear, and injects it. Use the same modifier in `#Preview` and in the headless logic tests, so previews and tests share one populated store.
-- Put seed data in per-entity `Entity+SampleData.swift` files inside `AppNameData` (no UI import), orchestrated by a single `AppNameSeedData.populate(into:)`. Make generation deterministic with a seeded random generator so previews and tests are stable run to run.
-- Provide a generic `ModelPreview<Entity>` wrapper that fetches the first object of a type from the in-memory container and hands it to the preview closure, keeping feature previews to one line.
-- Give every entity and value type a `static var preview` sample instance.
+- Build previews and tests on `PersistenceController(inMemory: true)` (a `/dev/null` store URL, no CloudKit) and create the objects they need through `AppNameStore`, so they exercise the same write path as the app.
+- Ship no seed or sample data in the template; an app that wants demo content adds it itself.
 
 ## Sign in with Apple
 
@@ -50,7 +48,7 @@ Supports [ADR-0011](adr/0011-auth-account-lifecycle.md).
 - Define button styles as types plus a `static var` accessor, giving call sites like `.buttonStyle(.appNamePrimary)`; centralize animation constants on `Animation` (for example `.openCard`) instead of inline magic numbers.
 - Expand a card from a list with `@Namespace` + `matchedGeometryEffect` + a ZStack overlay, rather than a navigation push, when the source item should stay in place.
 - Pin a persistent action bar with `.safeAreaInset(edge: .bottom)` so list content scrolls beneath it.
-- Add `.accessibilityRotor(...)` for the meaningful subsets of a list (for example "Unclaimed gifts") from the start; it is cheap to add alongside the list and costly to retrofit.
+- Add `.accessibilityRotor(...)` for the meaningful subsets of a list (for example "Items added this week") from the start; it is cheap to add alongside the list and costly to retrofit.
 - Provide macOS menu commands through a `Commands` struct attached to the `Scene`.
 
 ## Future work (design now, build later)
