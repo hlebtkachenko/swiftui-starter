@@ -4,22 +4,27 @@ name: codeql
 # is inherently slow (~17 min on a macOS runner) for a SwiftUI app. The cost is
 # the CodeQL tracer re-precompiling every imported system module (SwiftUI,
 # CloudKit, CoreData, ...) on every run; it is NOT our own code, which
-# compile in seconds. This was measured: the same build untraced takes 30 s, and
+# compiles in seconds. This was measured: the same build untraced takes 30 s, and
 # neither caching the precompiled modules nor pre-warming them before the traced
 # build helped (the tracer redoes the work regardless).
 #
-# It is a required merge gate (the `code_scanning` ruleset rule on `main`), so it
-# runs on every PR despite the cost: security scanning of real Swift code was
-# prioritized over merge speed (decision 2026-06-17). It also runs on push to
-# `main`, weekly, and on demand. The fast checks (gitleaks, guard, pr-check)
-# still gate too; this is the slow one. If the per-PR cost becomes a problem,
-# drop the `pull_request` trigger and the ruleset rule to return it to weekly +
-# on-demand only.
+# SUSPENDED as a PR gate since 2026-09-26: on the `xcode-27` runner image the
+# Xcode 27 helpers (swift-plugin-server, sandbox-exec) are arm64-only, while
+# CodeQL's Swift tracer drives the build as x86_64, so every macro expansion
+# fails with "Bad CPU type in executable". This cannot be fixed in this repo,
+# and the OS 27 floor rules out falling back to Xcode 26. Until CodeQL or the
+# image fixes it, the scan runs only weekly and on demand as a probe, and
+# `Analyze Swift` is not a required check. When a probe run succeeds, the
+# `restore` job opens a PR that uncomments the `#restore:` lines below and puts
+# `Analyze Swift` back into .github/rulesets/main.json.
+#
+# Once restored it is a required merge gate: security scanning of real Swift
+# code was prioritized over merge speed (decision 2026-06-17).
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  #restore: push:
+  #restore:   branches: [main]
+  #restore: pull_request:
+  #restore:   branches: [main]
   schedule:
     - cron: '23 4 * * 1'
   workflow_dispatch:
@@ -102,3 +107,37 @@ jobs:
         uses: github/codeql-action/analyze@v4
         with:
           category: "/language:swift"
+
+  # While the PR gate is suspended (see header), a green probe run proves CodeQL
+  # handles Xcode 27 again: open one PR that restores the triggers and the
+  # required check. Idempotent: does nothing once restored or while the PR is open.
+  # Needs Settings -> Actions -> "Allow GitHub Actions to create pull requests".
+  restore:
+    name: Propose CodeQL gate restore
+    needs: analyze
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch=ci/restore-codeql-gate
+          grep -q '#restore: ' .github/workflows/codeql.yml || { echo "Gate already restored."; exit 0; }
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "Restore branch already exists; see its PR."; exit 0
+          fi
+          sed -i 's/#restore: //' .github/workflows/codeql.yml
+          jq '(.rules[] | select(.type == "required_status_checks") | .parameters.required_status_checks) += [{"context": "Analyze Swift"}]' \
+            .github/rulesets/main.json > ruleset.tmp && mv ruleset.tmp .github/rulesets/main.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -am "ci: restore CodeQL as a required PR check"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "ci: restore CodeQL as a required PR check" \
+            --body "A scheduled or manual CodeQL run on the Xcode 27 runner passed (run ${{ github.run_id }}), so the upstream arm64 tracer problem looks fixed. This PR re-enables the push and pull_request triggers and adds Analyze Swift back to the main ruleset file. Before merging: push an empty commit so the checks run (PRs opened by GITHUB_TOKEN do not trigger workflows), remove the SUSPENDED note from the workflow header, and update the CodeQL rows in docs/ci-cd.md, AGENTS.md and ADR-0014. After merging: run .github/scripts/setup-branch-protection.sh to apply the ruleset."
