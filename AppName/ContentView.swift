@@ -40,14 +40,22 @@ struct ContentView: View {
                 }
             }
         } detail: {
-            // A folder deleted elsewhere (another device, a revoked share) drops out
-            // of the fetch, and the placeholder takes its place.
-            if let folder = folders.first(where: { $0.objectID == selection }) {
+            // A folder deleted here or elsewhere (another device, a revoked share)
+            // drops out of the fetch, and the placeholder takes its place.
+            if let folder = folders.first(where: {
+                $0.objectID == selection && !$0.isDeleted && $0.managedObjectContext != nil
+            }) {
                 // A fresh identity per folder, so its share state never carries over.
                 FolderDetailView(folder: folder)
                     .id(folder.objectID)
             } else {
                 ContentUnavailableView("No Folder Selected", systemImage: "folder")
+            }
+        }
+        // Clear a selection whose folder is gone, so no stale pushed detail remains.
+        .onChange(of: folders.map(\.objectID)) {
+            if let selection, !folders.contains(where: { $0.objectID == selection }) {
+                self.selection = nil
             }
         }
     }
