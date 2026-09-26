@@ -90,9 +90,14 @@ final class AppNameStore {
         _ = try await container.acceptShareInvitations(from: [metadata], into: store)
     }
 
-    /// Create a `CKShare` over a folder and its items, titled after the folder.
+    /// Create a `CKShare` over a folder and its items, titled after the folder. The
+    /// share item may be stale by the time the sheet asks, and `share(_:to:)` fails
+    /// for an already-shared object, so an existing share is returned first.
     private func share(_ folderID: NSManagedObjectID) async throws -> CKShare {
         guard let container else { throw AppNameStoreError.cloudKitUnavailable }
+        if let existing = try container.fetchShares(matching: [folderID])[folderID] {
+            return existing
+        }
         let folder = try context.existingObject(with: folderID)
         let (_, share, _) = try await container.share([folder], to: nil)
         share[CKShare.SystemFieldKey.title] = ((folder as? Folder)?.title ?? "") as CKRecordValue
