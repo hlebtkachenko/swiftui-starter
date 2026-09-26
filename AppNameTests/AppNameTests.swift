@@ -13,6 +13,32 @@ struct AppNameStoreTests {
         return (AppNameStore(context: context), context)
     }
 
+    @Test func createsAndFetchesFolders() throws {
+        let (store, context) = makeStore()
+        try store.createFolder(title: "Inbox")
+        let folders = try context.fetch(Folder.sortedFetchRequest())
+        #expect(folders.map(\.title) == ["Inbox"])
+        #expect(folders.first?.createdAt != nil)
+    }
+
+    @Test func itemsAreSortedByCreation() throws {
+        let (store, context) = makeStore()
+        let folder = try store.createFolder(title: "Inbox")
+        try store.createItem(in: folder, title: "First")
+        try store.createItem(in: folder, title: "Second")
+        let items = try context.fetch(Item.sortedFetchRequest(in: folder))
+        #expect(items.map(\.title) == ["First", "Second"])
+    }
+
+    @Test func deletingAFolderDeletesItsItems() throws {
+        let (store, context) = makeStore()
+        let folder = try store.createFolder(title: "Temp")
+        try store.createItem(in: folder, title: "Thing")
+        try store.delete(folder)
+        #expect(try context.count(for: Folder.sortedFetchRequest()) == 0)
+        #expect(try context.count(for: NSFetchRequest<Item>(entityName: AppNameModel.Entity.item)) == 0)
+    }
+
     @Test func failedSaveRollsBack() throws {
         let context = FailingSaveContext(concurrencyType: .mainQueueConcurrencyType)
         context.persistentStoreCoordinator = PersistenceController(inMemory: true).container.persistentStoreCoordinator
@@ -55,6 +81,12 @@ struct SharingTests {
         #expect(throws: AppNameStoreError.cloudKitUnavailable) {
             _ = try store.existingShare(for: folder)
         }
+    }
+
+    @Test func noShareItemWhileSyncIsOff() throws {
+        let store = AppNameStore(PersistenceController(inMemory: true))
+        let folder = try store.createFolder(title: "Local")
+        #expect(try store.shareItem(for: folder) == nil)
     }
 }
 
