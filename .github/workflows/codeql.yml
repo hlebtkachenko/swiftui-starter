@@ -52,18 +52,22 @@ jobs:
     name: Analyze Swift
     needs: detect
     if: needs.detect.outputs.has_swift == 'true'
-    runs-on: macos-latest
+    # The OS 27 floor needs the Xcode 27 SDK, which GitHub ships only on the
+    # `xcode-27` image (preview); `macos-latest` still carries Xcode 26 only.
+    # Return to `macos-latest` once it gains Xcode 27.
+    runs-on: xcode-27
     permissions:
       security-events: write
       actions: read
       contents: read
     steps:
       - uses: actions/checkout@v6
-      - name: Select Xcode 26
+      - name: Select Xcode 27
         run: |
-          latest_xcode="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
-          [ -n "$latest_xcode" ] && sudo xcode-select -s "$latest_xcode/Contents/Developer"
+          # Use the image default Xcode 27 (the image also carries 27.x betas).
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
+          xcodebuild -version | grep -q '^Xcode 27\.' || { echo "Xcode 27 not found on this runner"; exit 1; }
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
