@@ -72,6 +72,10 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: swift
+          # Experiment: last green run (Xcode 26.6) used bundle 2.26.4; isolate
+          # whether the Xcode 27 failure is the CodeQL 2.27 bump or Xcode 27.
+          tools: https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.26.4/codeql-bundle-osx64.tar.zst
+          debug: true
       - name: Build for analysis
         env:
           # Optional: forks need not set this secret. The build below disables
