@@ -9,8 +9,8 @@ struct AppNameCommands: Commands {
 
     var body: some Commands {
         // A "New" entry next to the system New Item slot. Shift-Command-N, because
-        // Command-N is the system's New Window. The action goes through the store port, so the command is
-        // independent of any particular screen.
+        // Command-N is the system's New Window. The action goes through the
+        // environment's store, so the command is independent of any screen.
         CommandGroup(after: .newItem) {
             Button("New Folder") {
                 environment.write("create a folder") { try $0.createFolder(title: String(localized: "New Folder")) }

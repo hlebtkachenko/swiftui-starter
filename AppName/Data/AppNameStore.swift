@@ -68,7 +68,7 @@ final class AppNameStore {
 
     // These need a provisioned container and an iCloud account, so they run on
     // device, not in headless tests. They throw `cloudKitUnavailable` when the
-    // store has no container (the in-memory test double).
+    // store was built with `init(context:)` and so has no container.
 
     /// What `ShareLink` needs for a folder: its existing share, or a handler that
     /// creates one. `nil` while sync is off, since there is no container to share in.
