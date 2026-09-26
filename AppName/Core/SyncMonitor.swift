@@ -23,13 +23,14 @@ final class SyncMonitor {
     /// The last failed event's message; cleared only by an event that finishes OK.
     private var eventError: String?
 
-    /// Begin observing the live event stream. Safe to call once at launch; with no
-    /// CloudKit container (tests, previews) no events ever arrive and it stays idle.
+    /// Begin observing the live event stream. Call once, as early as possible: the
+    /// subscription is made before this returns, so early setup events are not
+    /// missed. With no CloudKit container no events arrive and it stays idle.
     func start() {
+        let stream = NotificationCenter.default.notifications(
+            named: NSPersistentCloudKitContainer.eventChangedNotification
+        )
         Task { [weak self] in
-            let stream = NotificationCenter.default.notifications(
-                named: NSPersistentCloudKitContainer.eventChangedNotification
-            )
             for await note in stream {
                 guard
                     let raw = note.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]

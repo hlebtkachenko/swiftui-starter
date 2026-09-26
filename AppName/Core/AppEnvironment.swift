@@ -32,15 +32,17 @@ final class AppEnvironment {
         if let error = persistence.loadError {
             sync.report(storeLoadError: error)
         }
+        // Subscribe to sync events now, before any window exists, so CloudKit
+        // setup errors posted at launch are not lost.
+        sync.start()
     }
 
     @ObservationIgnored private var started = false
 
-    /// Start the live monitors. Every window calls this; only the first call runs.
+    /// Start the remaining monitors. Every window calls this; only the first call runs.
     func start() {
         guard !started else { return }
         started = true
-        sync.start()
         connectivity.start()
         receiveMetrics()
         #if DEBUG
