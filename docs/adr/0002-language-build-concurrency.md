@@ -8,7 +8,7 @@ A greenfield app in 2026 built against the OS 27 SDK should adopt the current Sw
 
 ## Decision
 
-- Use Xcode 27 with its bundled Swift toolchain and the Swift 6 language mode (complete data-race safety / strict concurrency).
+- Use Xcode 27 with its bundled Swift 6.4 toolchain and the Swift 6 language mode (`SWIFT_VERSION = 6.0`; complete data-race safety / strict concurrency). Swift 6 is the newest language mode Xcode 27 offers (it accepts 4, 4.2, 5, and 6).
 - Isolate the app target to the main actor by default, and take the approachable-concurrency easements (introduced in Swift 6.2).
 - Set these explicitly (verified 2026-06-09): `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` (the app-template default since Xcode 26, SE-0466) and the umbrella **Approachable Concurrency** build setting rather than the five flags one by one. Defer Strict Memory Safety while it is still noisy with macros.
 
