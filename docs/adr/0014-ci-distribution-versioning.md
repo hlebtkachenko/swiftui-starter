@@ -1,6 +1,6 @@
 # ADR-0014: CI, distribution, and versioning
 
-**Status:** Accepted - 2026-06-09
+**Status:** Accepted - 2026-06-09; amended 2026-09-26 (CodeQL is a required PR check)
 
 ## Context
 
@@ -8,7 +8,7 @@ The project already runs GitHub Actions for repo hygiene, but building, signing,
 
 ## Decision
 
-- Run two complementary CI lanes: Xcode Cloud builds, tests, signs, and ships to TestFlight and the App Store; GitHub Actions runs the fast PR gates (gitleaks, guard, pr-check) plus the `vX.Y.Z` tag-push release, and runs CodeQL (a slow Swift build) after merge to `main` and on a weekly schedule, off the PR critical path so PRs stay seconds-fast.
+- Run two complementary CI lanes: Xcode Cloud builds, tests, signs, and ships to TestFlight and the App Store; GitHub Actions runs the fast PR gates (gitleaks, guard, pr-check) plus the `vX.Y.Z` tag-push release, and runs CodeQL (a ~17 min Swift build) as a required PR check, on push to `main`, and weekly; see `docs/ci-cd.md`.
 - Distribute through TestFlight, internal testers first and external testers later behind a Beta App Review.
 - Version with `vX.Y.Z` tags as the marketing version; auto-increment the build number on every upload.
 - Promote the CloudKit schema from Development to Production in the CloudKit Dashboard before the first external-TestFlight or production build, because dev/Xcode builds use Development while TestFlight and the App Store use Production.
