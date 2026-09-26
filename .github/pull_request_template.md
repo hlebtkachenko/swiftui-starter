@@ -8,7 +8,7 @@
 
 ## Type
 
-<!-- One of: feat | fix | docs | refactor | test | ci | chore | perf | build | style -->
+<!-- One of: feat | fix | docs | refactor | test | ci | chore | perf | build | style | revert -->
 
 ## Changes
 
@@ -26,4 +26,4 @@
 - [ ] Nothing private or not meant for a public repository is included.
 - [ ] `CHANGELOG.md` updated if user-facing; `STATE.md` updated if project state changed.
 - [ ] Scoped to the stated purpose, with no unrelated edits.
-- [ ] Required gates pass (gitleaks, guard, pr-check).
+- [ ] Required gates pass (gitleaks, guard, pr-check, CodeQL).
