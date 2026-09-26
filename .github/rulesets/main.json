@@ -29,7 +29,8 @@
         "required_status_checks": [
           { "context": "Scan for secrets" },
           { "context": "Block secrets and private files" },
-          { "context": "PR title and description" }
+          { "context": "PR title and description" },
+          { "context": "Build and test" }
         ]
       }
     }

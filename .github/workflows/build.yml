@@ -1,0 +1,83 @@
+name: build
+
+# The only compile-and-test gate on GitHub: CodeQL is suspended as a PR gate
+# (see codeql.yml), and Xcode Cloud builds only for signing and TestFlight.
+# `Build and test` runs the unit tests on macOS and compiles the iOS app and
+# test bundles for the simulator (build-for-testing, no simulator boot).
+#
+# Cost: macOS minutes are free on public repos; a private copy of the template
+# bills them at 10x the Linux rate. A cheap Ubuntu `changes` job skips the macOS
+# job when a PR touches no Swift or project file (docs-only PRs). A skipped job
+# counts as success for a required check, but a job that never runs does not
+# report at all, so `changes` itself always runs. No caching: an untraced build
+# of this app is short (see codeql.yml for the measurement).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect Swift or project changes
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # the PR base commit must be present for the diff
+      - id: check
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # HEAD is the PR merge commit, so base..HEAD is exactly the PR's changes.
+          files=$(git diff --name-only "$BASE" HEAD)
+          if printf '%s\n' "$files" | grep -Eq '^(AppName/|AppName[^/]*Tests/|[^/]+\.xcodeproj/|(.*/)?[^/]+\.xcconfig$|\.github/workflows/build\.yml$)'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No Swift or project files changed; the macOS build is skipped."
+          fi
+
+  build:
+    name: Build and test
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
+    # The OS 27 floor needs the Xcode 27 SDK, which GitHub ships only on the
+    # `xcode-27` image (preview); `macos-latest` still carries Xcode 26 only.
+    # Return to `macos-latest` once it gains Xcode 27.
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select Xcode 27
+        run: |
+          # Use the image default Xcode 27 (the image also carries 27.x betas).
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+          xcodebuild -version | grep -q '^Xcode 27\.' || { echo "Xcode 27 not found on this runner"; exit 1; }
+      - name: Unit tests on macOS
+        run: |
+          xcodebuild test \
+            -scheme AppName \
+            -destination 'platform=macOS' \
+            -derivedDataPath build \
+            -only-testing:AppNameTests \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Build for testing on the iOS Simulator
+        run: |
+          xcodebuild build-for-testing \
+            -scheme AppName \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
