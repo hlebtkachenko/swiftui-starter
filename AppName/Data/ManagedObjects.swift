@@ -2,9 +2,10 @@ import CoreData
 
 // `NSManagedObject` subclasses for the programmatic model. The view layer reads
 // these directly with `@FetchRequest` (ADR-0003); the store maps them to and
-// from the Sendable domain structs so logic stays Core Data-free.
+// from the Sendable domain structs so logic stays Core Data-free. They are
+// nonisolated: Core Data uses them on whatever queue owns their context.
 
-final class WishlistMO: NSManagedObject {
+nonisolated final class WishlistMO: NSManagedObject {
     @NSManaged var id: UUID?
     @NSManaged var title: String?
     @NSManaged var createdAt: Date?
@@ -20,7 +21,7 @@ final class WishlistMO: NSManagedObject {
     }
 }
 
-final class WishItemMO: NSManagedObject {
+nonisolated final class WishItemMO: NSManagedObject {
     @NSManaged var id: UUID?
     @NSManaged var title: String?
     @NSManaged var note: String?

@@ -7,10 +7,10 @@ import CoreData
 /// CloudKit compatibility (ADR-0005): every attribute is optional or has a
 /// default, every relationship is optional with an explicit inverse, and no
 /// relationship uses the Deny delete rule.
-enum AppNameModel {
+nonisolated enum AppNameModel {
     enum Entity {
-        nonisolated static let wishlist = "Wishlist"
-        nonisolated static let wishItem = "WishItem"
+        static let wishlist = "Wishlist"
+        static let wishItem = "WishItem"
     }
 
     static func make() -> NSManagedObjectModel {

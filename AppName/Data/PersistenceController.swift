@@ -36,6 +36,10 @@ final class PersistenceController {
 
     static let shared = PersistenceController(inMemory: false)
 
+    /// One model for every container in the process: a fresh model per container
+    /// makes several entity descriptions claim the same managed-object subclass.
+    private static let model = AppNameModel.make()
+
     /// An in-memory controller pre-populated with deterministic sample data, for
     /// SwiftUI previews.
     static func preview() -> PersistenceController {
@@ -45,7 +49,7 @@ final class PersistenceController {
     }
 
     init(inMemory: Bool) {
-        container = NSPersistentCloudKitContainer(name: "AppName", managedObjectModel: AppNameModel.make())
+        container = NSPersistentCloudKitContainer(name: "AppName", managedObjectModel: Self.model)
 
         guard let description = container.persistentStoreDescriptions.first else {
             fatalError("NSPersistentContainer has no default store description")
