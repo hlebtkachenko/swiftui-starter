@@ -59,6 +59,8 @@ Edit `Secrets.xcconfig` and replace `YOUR_TEAM_ID`.
 
 ## 4. Build
 
+You need Xcode 27: every target deploys to OS 27 (iOS / iPadOS / macOS 27) and later.
+
 ```
 xcodebuild build -scheme ${NEW} -destination 'platform=macOS'
 xcodebuild build -scheme ${NEW} -destination 'platform=iOS Simulator,name=iPhone 17'

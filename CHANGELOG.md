@@ -2,15 +2,19 @@
 
 All notable changes to this project are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## Versioning
-
-Release tags use `vX.Y.Z`:
-
-- **X (major):** decided manually by the owner (for example `v1`, `v2`); never bumped automatically.
-- **Y (feature):** normal releases for new features; increments freely, no upper bound.
-- **Z (fix):** hotfixes and small or minor changes.
+Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](docs/ci-cd.md).
 
 ## [Unreleased]
+
+Planned as 0.3.0 (a feature release; the major number is the owner's call).
+
+### Changed
+- **Breaking:** the deployment floor is now OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. Apps that must run on OS 26 should stay on 0.2.x. ADR-0001 and ADR-0002 are amended; ADR-0008 and ADR-0010 note that the OS 27 APIs they mention are now within the floor.
+- Agent setup follows one file: `AGENTS.md` holds the agent instructions and the `CLAUDE.md` symlink is removed. `ARCHITECTURE.md` maps the code. ADR-0015 is amended accordingly.
+- Docs trimmed to one home per topic: `docs/engineering.md` is folded into `docs/patterns.md`, the CI gate tables in `docs/ci-cd.md` are merged, the research report is marked historical, and `README.md` / `STATE.md` point to the guide and `ARCHITECTURE.md` instead of repeating them.
+
+### Added
+- CodeGraph code index for agents: project-scoped MCP server in `.mcp.json`, `mcp__codegraph__*` allowed in `.claude/settings.json`, a Conductor setup script that builds the gitignored `.codegraph/` index per workspace. ADR-0004 records it as developer tooling, not an app dependency.
 
 ## [0.2.1] - 2026-06-20
 

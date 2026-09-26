@@ -1,19 +1,18 @@
 # Project state
 
-Developer- and agent-facing snapshot. Read this first to know what exists and what to do next. Rules and conventions live in `AGENTS.md` and `docs/`.
+Snapshot of what exists. Code layout lives in `ARCHITECTURE.md`, agent instructions in `AGENTS.md`, decisions in `docs/adr/`.
 
-This is a **template** (`AppName` is a placeholder). Once you start a real app from it, rewrite this file to describe that app's state.
+This is a **template** (`AppName` is a placeholder). Once you start a real app from it ([docs/using-the-template.md](docs/using-the-template.md)), rewrite this file to describe that app's state.
 
-- **What this is:** a SwiftUI starter for Apple-native, multiplatform apps (iPhone, iPad, Mac).
-- **Platform:** minimum OS 26; Liquid Glass only.
-- **Version:** 0.2.1. Ships a working, tested spine plus one example feature (a family wishlist) demonstrating the CloudKit + `CKShare` stack. CI passes with no secrets configured, and the `main` ruleset is reproducible from the repo (see `docs/ci-cd.md`). Start a new app with `docs/using-the-template.md`.
+- **Platform:** minimum OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27; Liquid Glass only.
+- **Version:** 0.2.1 released; the OS 27 floor and the agent-tooling changes are unreleased (see `CHANGELOG.md`).
 
 ## Stack
 
 | Area | Decision |
 |------|----------|
 | Language / UI | Swift 6, SwiftUI, single multiplatform target |
-| Minimum OS | 26 (iOS / iPadOS / macOS) |
+| Minimum OS | 27 (iOS / iPadOS / macOS), Xcode 27 |
 | Design | System Liquid Glass only |
 | Architecture | Observation (`@Observable`) model-view; per-screen view model only when a screen needs it |
 | Dependency manager | Swift Package Manager; zero third-party dependencies to start |
@@ -26,28 +25,18 @@ This is a **template** (`AppName` is a placeholder). Once you start a real app f
 | AI | None; later on-device Foundation Models only (no third-party/cloud LLM) |
 | Observability | First-party only: `OSLog`, MetricKit, Xcode Organizer, App Store Connect analytics |
 | CI | Xcode Cloud (build/test/sign/ship) + GitHub Actions (repo gates + tag-push release) |
+| Agent tooling | `AGENTS.md` + `ARCHITECTURE.md`; CodeGraph index (local, gitignored) via project `.mcp.json` |
 
-The decisions live as ADRs in `docs/adr/` (0001-0017); the research report `docs/plans/os26-apple-native-research.md` holds the rationale, trade-offs, and Apple citations behind them. They reflect the choices baked into the template; revisit any that do not fit your app.
+Each row is an ADR in `docs/adr/` (0001-0017); revisit any that does not fit your app.
 
 ## What exists
 
-- Governance docs: `AGENTS.md` (+ `docs/`), `LICENSE`, `SECURITY.md`, `CHANGELOG.md`.
-- CI gates: gitleaks, guard (secrets / private / large / personal data / links / ownership map), pr-check, codeql, release-check.
-- Xcode multiplatform project (`AppName.xcodeproj`): `AppName` app + `AppNameTests` (Swift Testing) + `AppNameUITests`; signing team in a gitignored `Secrets.xcconfig` wired via `Shared.xcconfig`.
-- App spine (`AppName/Core`, `AppName/Commands`, `AppName/Views`): a domain-agnostic, multiplatform foundation independent of any feature - the `AppEnvironment` composition root, `AppRouter`, `SyncMonitor`, `Connectivity`, a `Commands` layer, a macOS `Settings` scene, sync-state surfacing, an `OSLog` facade, a MetricKit subscriber, and a privacy manifest.
-- Example data layer (`AppName/Data`, `AppName/Sharing`): a programmatic Core Data model (`Wishlist`, `WishItem`, partitioned `GiftClaim`) on `NSPersistentCloudKitContainer`; the store protocol with a Core Data implementation and an in-memory test double; deterministic sample data; `CKShare` role mapping; a temporary on-device sharing surface; a placeholder Wishlists/Items SwiftUI shell.
-- Swift Testing cases covering the sync state machine, error/account mapping, the router, and the example data layer; macOS and iOS Simulator builds and the test suite pass.
+- Xcode project `AppName.xcodeproj`: the `AppName` app, `AppNameTests` (Swift Testing), `AppNameUITests`; signing team in a gitignored `Secrets.xcconfig` wired via `Shared.xcconfig`.
+- App spine (`AppName/Core`, `AppName/Commands`, `AppName/Views`) and the example data layer (`AppName/Data`, `AppName/Sharing`), described in `ARCHITECTURE.md`.
+- Swift Testing cases for the sync state machine, error/account mapping, the router, and the example data layer.
+- CI gates: gitleaks, guard, pr-check, codeql, release-check; the `main` ruleset as code (`docs/ci-cd.md`).
 
-## Start a new app from this template
-
-1. Clone, then enable local hooks: `git config core.hooksPath .githooks`.
-2. Rename `AppName` to your app (see `README.md`), set `DEVELOPMENT_TEAM` in `Secrets.xcconfig`, and confirm both builds pass.
-3. Read `AGENTS.md` for constraints and boundaries.
-4. Replace the example domain in `AppName/Data` with your own model and views.
-5. To enable sync: provision an iCloud container and set `cloudKitContainerIdentifier` (it is `nil` by default).
-6. Rewrite `README.md`, this file, and `CHANGELOG.md` for your app; revisit the ADRs that do not fit.
-
-## Notes carried from the source project
+## Known gaps
 
 - The example sharing UI is temporary scaffolding; build a real, owner/participant-aware family-sharing UI if you keep that feature.
 - The gift-claim partition is enforced at the model level (a claim references its item by `UUID`, never a relationship); the physical giver-only CloudKit zone is a follow-up.
