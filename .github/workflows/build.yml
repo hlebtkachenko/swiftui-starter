@@ -33,16 +33,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # the PR base commit must be present for the diff
+          fetch-depth: 2 # HEAD^1 of the PR merge commit must be present
       - id: check
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "$GITHUB_EVENT_NAME" != "pull_request" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          # HEAD is the PR merge commit, so base..HEAD is exactly the PR's changes.
-          files=$(git diff --name-only "$BASE" HEAD)
+          # HEAD is the PR merge commit and HEAD^1 the base branch tip, so this
+          # is exactly the PR's changes. --no-renames lists both sides of a move.
+          # If the diff fails, build anyway rather than risk a false green.
+          files=$(git diff --no-renames --name-only HEAD^1 HEAD) || { echo "changed=true" >> "$GITHUB_OUTPUT"; exit 0; }
           if printf '%s\n' "$files" | grep -Eq '^(AppName/|AppName[^/]*Tests/|[^/]+\.xcodeproj/|(.*/)?[^/]+\.xcconfig$|\.github/workflows/build\.yml$)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
@@ -53,7 +53,9 @@ jobs:
   build:
     name: Build and test
     needs: changes
-    if: needs.changes.outputs.changed == 'true'
+    # A skipped job counts as a passing check, so build unless `changes` ran
+    # and positively found nothing: a failed `changes` still builds.
+    if: ${{ !cancelled() && needs.changes.outputs.changed != 'false' }}
     # The OS 27 floor needs the Xcode 27 SDK, which GitHub ships only on the
     # `xcode-27` image (preview); `macos-latest` still carries Xcode 26 only.
     # Return to `macos-latest` once it gains Xcode 27.

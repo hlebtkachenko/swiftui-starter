@@ -37,15 +37,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  detect:
-    name: Detect Swift sources
+  keepalive:
+    name: Keep the probe enabled
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    # A job-level block replaces the workflow one, so repeat contents: read.
     permissions:
-      contents: read
       actions: write
-    outputs:
-      has_swift: ${{ steps.check.outputs.has_swift }}
     steps:
       # GitHub disables scheduled workflows in a public repo after 60 days
       # without repository activity (this probe once went to
@@ -55,14 +52,19 @@ jobs:
       # https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows
       # https://docs.github.com/en/rest/actions/workflows#enable-a-workflow
       # The docs do not say whether this call resets the 60-day timer, so this
-      # is best effort; continue-on-error keeps a failure here from skipping
-      # the probe. Not on PRs: fork PRs get a read-only token.
+      # is best effort; it runs as its own job so a failure never
+      # skips the probe and PR runs never hold an actions: write token.
       - name: Keep this scheduled probe enabled
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow enable codeql.yml --repo "$GITHUB_REPOSITORY"
+
+  detect:
+    name: Detect Swift sources
+    runs-on: ubuntu-latest
+    outputs:
+      has_swift: ${{ steps.check.outputs.has_swift }}
+    steps:
       - uses: actions/checkout@v6
       - id: check
         run: |
