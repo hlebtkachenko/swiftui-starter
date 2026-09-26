@@ -4,18 +4,18 @@ Single source of truth: **each topic lives in exactly one file.** Other files li
 
 | Topic | Home |
 |-------|------|
-| Coordination, constraints, boundaries, commands (lean index) | [`../AGENTS.md`](../AGENTS.md) |
-| Current state, blockers, how to resume | [`../STATE.md`](../STATE.md) |
-| Change history and versioning | [`../CHANGELOG.md`](../CHANGELOG.md) |
+| Agent instructions: constraints, commands, local gate, gotchas | [`../AGENTS.md`](../AGENTS.md) |
+| Code layout, components, data flow | [`../ARCHITECTURE.md`](../ARCHITECTURE.md) |
+| Current state, stack table, known gaps | [`../STATE.md`](../STATE.md) |
+| Change history | [`../CHANGELOG.md`](../CHANGELOG.md) |
 | License | [`../LICENSE`](../LICENSE) |
 | Vulnerability-reporting policy | [`../SECURITY.md`](../SECURITY.md) |
-| Engineering principles and conventions | [engineering.md](engineering.md) |
 | Secrets, personal data, privacy, guard internals, denylist | [security.md](security.md) |
-| CI gates, the `main` ruleset, release process | [ci-cd.md](ci-cd.md) |
+| CI gates, the `main` ruleset, versioning, release process | [ci-cd.md](ci-cd.md) |
 | How to start a new app from this template | [using-the-template.md](using-the-template.md) |
 | Founding technical decisions (canonical, one per record) | [adr/README.md](adr/README.md) plus the numbered records listed below |
-| OS 26 SwiftUI / Liquid Glass stack research and evidence behind the ADRs | [plans/os26-apple-native-research.md](plans/os26-apple-native-research.md) |
-| Implementation recipes distilled from Apple samples and docs | [patterns.md](patterns.md) |
+| Historical: the June 2026 OS 26 research and evidence behind the founding ADRs | [plans/os26-apple-native-research.md](plans/os26-apple-native-research.md) |
+| Swift and Apple-platform conventions, implementation recipes from Apple samples | [patterns.md](patterns.md) |
 
 `AGENTS.md` may carry one-line summaries that point here; that is the index, not duplication. Anything longer than a pointer belongs in one home only.
 

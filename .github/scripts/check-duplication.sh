@@ -23,7 +23,7 @@ while IFS= read -r f; do
     [ "${#norm}" -ge "$min_len" ] || continue
     printf '%s\t%s\n' "$norm" "$f" >> "$tmp"
   done < "$f"
-done < <(git ls-files '*.md' ':!CHANGELOG.md' ':!CLAUDE.md')
+done < <(git ls-files '*.md' ':!CHANGELOG.md')
 
 dupes="$(sort -u "$tmp" | awk -F'\t' '{c[$1]++} END{for (k in c) if (c[k] > 1) print k}')"
 if [ -n "$dupes" ]; then

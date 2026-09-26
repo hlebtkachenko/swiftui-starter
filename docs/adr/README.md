@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-The durable record of AppName's load-bearing technical decisions: what we chose, why, and what each choice commits us to. One decision per file, numbered, immutable once **Accepted**. To change a decision, add a new ADR that supersedes the old one and mark the old one `Superseded by ADR-XXXX`; never rewrite an accepted record.
+The durable record of AppName's load-bearing technical decisions: what we chose, why, and what each choice commits us to. One decision per file, numbered, immutable once **Accepted**. To reverse a decision, add a new ADR that supersedes the old one and mark the old one `Superseded by ADR-XXXX`. A decision that keeps its direction but moves a parameter (for example the OS floor) may be amended in place, with the date in the Status line.
 
 **Canonical vs evidence.** These ADRs are the canonical "what we decided." The research report [`../plans/os26-apple-native-research.md`](../plans/os26-apple-native-research.md) holds the Apple primary-source evidence (API signatures, citations, trade-offs) behind them; its §0.5 table is the original lock log from 2026-06-09. [`../../STATE.md`](../../STATE.md) carries the at-a-glance snapshot.
 
@@ -8,7 +8,7 @@ The durable record of AppName's load-bearing technical decisions: what we chose,
 
 | # | Decision |
 |---|----------|
-| [0001](0001-platform-os-floor-liquid-glass.md) | Platform, OS 26 floor, and Liquid Glass |
+| [0001](0001-platform-os-floor-liquid-glass.md) | Platform, OS floor (27), and Liquid Glass |
 | [0002](0002-language-build-concurrency.md) | Language, build toolchain, and concurrency |
 | [0003](0003-ui-state-architecture.md) | UI and state architecture |
 | [0004](0004-dependency-policy.md) | Dependency policy |

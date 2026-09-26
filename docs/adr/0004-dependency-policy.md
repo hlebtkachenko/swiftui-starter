@@ -1,6 +1,6 @@
 # ADR-0004: Dependency policy
 
-**Status:** Accepted - 2026-06-09
+**Status:** Accepted - 2026-06-09; amended 2026-09-26 (developer tooling)
 
 ## Context
 
@@ -12,6 +12,7 @@ Every third-party dependency is attack surface, a privacy-manifest obligation, a
 - Prefer first-party frameworks; add a dependency only when a concrete need clearly beats first-party, and review each for its privacy-manifest entry and maintenance cost.
 - Splitting our own code into local SPM packages is internal structure, not a dependency, and stays optional (see [ADR-0015](0015-project-structure-agent-ergonomics.md)).
 - Do not adopt CocoaPods or Carthage.
+- Developer tooling that never ships in the app is outside this policy: CodeGraph (the agents' code index, see [ADR-0015](0015-project-structure-agent-ergonomics.md)) is installed on the developer machine, not linked into any target.
 
 ## Consequences
 

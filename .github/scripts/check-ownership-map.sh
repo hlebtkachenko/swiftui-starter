@@ -7,7 +7,7 @@ set -euo pipefail
 map="docs/README.md"
 [ -f "$map" ] || { echo "::error::$map (ownership map) is missing."; exit 1; }
 
-required="$(git ls-files '*.md' ':!CHANGELOG.md' ':!CLAUDE.md' ':!README.md' ':!docs/README.md' ':!.github') LICENSE"
+required="$(git ls-files '*.md' ':!CHANGELOG.md' ':!README.md' ':!docs/README.md' ':!.github') LICENSE"
 status=0
 for f in $required; do
   base="$(basename "$f")"
