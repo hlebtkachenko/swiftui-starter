@@ -36,7 +36,7 @@ struct ContentView: View {
                     }
                 }
                 ToolbarItem(placement: .status) {
-                    SyncStatusChip(state: environment.displayState)
+                    SyncStatusChip(state: environment.displayState, onDismiss: environment.sync.dismissReportedError)
                 }
             }
         } detail: {

@@ -6,6 +6,8 @@ import SwiftUI
 /// treatment comes with the design layer.
 struct SyncStatusChip: View {
     let state: SyncState
+    /// Called when the user closes the message, so a one-off error can be cleared.
+    var onDismiss: () -> Void = {}
     @State private var showsMessage = false
 
     var body: some View {
@@ -19,6 +21,9 @@ struct SyncStatusChip: View {
                     Text(state.label)
                         .padding()
                         .presentationCompactAdaptation(.popover)
+                }
+                .onChange(of: showsMessage) { _, isShown in
+                    if !isShown { onDismiss() }
                 }
         }
     }

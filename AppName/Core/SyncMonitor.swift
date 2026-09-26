@@ -22,6 +22,9 @@ final class SyncMonitor {
     private var activeEvents: Set<UUID> = []
     /// The last failed event's message; cleared only by an event that finishes OK.
     private var eventError: String?
+    /// A one-off failure reported from outside the event stream (for example
+    /// accepting a share). Sync events never clear it; the user dismisses it.
+    private var reportedError: String?
 
     /// Begin observing the live event stream. Call once, as early as possible: the
     /// subscription is made before this returns, so early setup events are not
@@ -63,15 +66,20 @@ final class SyncMonitor {
         recomputeState()
     }
 
-    /// Surface a one-off CloudKit failure (for example accepting a share). The
-    /// next event that finishes cleanly clears it.
+    /// Surface a one-off CloudKit failure (for example accepting a share). It stays
+    /// until `dismissReportedError()` or the next report replaces it.
     func report(_ error: Error) {
-        eventError = SyncErrorMapper.describe(error)
+        reportedError = SyncErrorMapper.describe(error)
+        recomputeState()
+    }
+
+    func dismissReportedError() {
+        reportedError = nil
         recomputeState()
     }
 
     private func recomputeState() {
-        if let message = storeLoadError ?? eventError {
+        if let message = storeLoadError ?? reportedError ?? eventError {
             state = .error(message: message)
         } else if !activeEvents.isEmpty {
             state = .syncing
