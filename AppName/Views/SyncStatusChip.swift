@@ -1,35 +1,44 @@
 import SwiftUI
 
 /// A compact sync indicator for toolbars and chrome. Shows nothing when idle and
-/// up to date; otherwise a symbol plus the state's label. Plain styling for now;
-/// Liquid Glass treatment comes with the design layer.
+/// up to date; otherwise a symbol button that opens the state's full message, so
+/// it works by tap and pointer alike. Plain styling for now; Liquid Glass
+/// treatment comes with the design layer.
 struct SyncStatusChip: View {
     let state: SyncState
+    @State private var showsMessage = false
 
     var body: some View {
+        if let symbol {
+            Button(state.label, systemImage: symbol) { showsMessage = true }
+                .labelStyle(.iconOnly)
+                .foregroundStyle(tint)
+                .symbolEffect(.rotate, isActive: state == .syncing)
+                .help(state.label)
+                .popover(isPresented: $showsMessage) {
+                    Text(state.label)
+                        .padding()
+                        .presentationCompactAdaptation(.popover)
+                }
+        }
+    }
+
+    private var symbol: String? {
         switch state {
-        case .idle:
-            EmptyView()
-        case .syncing:
-            Label("Syncing", systemImage: "arrow.triangle.2.circlepath")
-                .labelStyle(.iconOnly)
-                .symbolEffect(.rotate)
-                .help(state.label)
-        case .offline:
-            Label(state.label, systemImage: "wifi.slash")
-                .labelStyle(.iconOnly)
-                .foregroundStyle(.secondary)
-                .help(state.label)
-        case .accountUnavailable:
-            Label(state.label, systemImage: "person.crop.circle.badge.exclamationmark")
-                .labelStyle(.iconOnly)
-                .foregroundStyle(.orange)
-                .help(state.label)
-        case .error:
-            Label(state.label, systemImage: "exclamationmark.icloud")
-                .labelStyle(.iconOnly)
-                .foregroundStyle(.red)
-                .help(state.label)
+        case .idle: nil
+        case .syncing: "arrow.triangle.2.circlepath"
+        case .offline: "wifi.slash"
+        case .accountUnavailable: "person.crop.circle.badge.exclamationmark"
+        case .error: "exclamationmark.icloud"
+        }
+    }
+
+    private var tint: Color {
+        switch state {
+        case .idle, .syncing: .primary
+        case .offline: .secondary
+        case .accountUnavailable: .orange
+        case .error: .red
         }
     }
 }
