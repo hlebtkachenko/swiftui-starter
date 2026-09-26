@@ -3,7 +3,7 @@ import CoreData
 import Foundation
 
 /// What the data spine is doing, surfaced to the UI. Domain-agnostic: it knows
-/// nothing about wishlists, only about sync, account, and network health.
+/// nothing about the app's data, only about sync, account, and network health.
 enum SyncState: Equatable, Sendable {
     case idle
     case syncing

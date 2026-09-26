@@ -4,27 +4,35 @@ import OSLog
 
 struct ContentView: View {
     @Environment(AppEnvironment.self) private var environment
-    @FetchRequest(fetchRequest: WishlistMO.fetchAllRequest()) private var wishlists: FetchedResults<WishlistMO>
+    @FetchRequest(fetchRequest: Folder.sortedFetchRequest()) private var folders: FetchedResults<Folder>
     @State private var selection: NSManagedObjectID?
 
     var body: some View {
         NavigationSplitView {
             List(selection: $selection) {
-                ForEach(wishlists, id: \.objectID) { list in
-                    Text(list.title ?? "Untitled")
-                        .tag(list.objectID)
-                        .deleteDisabled(!environment.store.canDelete(list))
+                ForEach(folders, id: \.objectID) { folder in
+                    Text(folder.title ?? "")
+                        .tag(folder.objectID)
+                        .contextMenu {
+                            Button("Delete", systemImage: "trash", role: .destructive) { delete(folder) }
+                                .disabled(!environment.store.canEdit(folder))
+                        }
+                        .deleteDisabled(!environment.store.canEdit(folder))
                 }
                 .onDelete { offsets in
-                    let lists = offsets.map { wishlists[$0] }
-                    environment.write("delete a list") { try $0.delete(lists) }
+                    offsets.map { folders[$0] }.forEach(delete)
                 }
             }
-            .navigationTitle("Wishlists")
+            .overlay {
+                if folders.isEmpty {
+                    ContentUnavailableView("No Folders", systemImage: "folder")
+                }
+            }
+            .navigationTitle("Folders")
             .toolbar {
                 ToolbarItem {
-                    Button("Add list", systemImage: "plus") {
-                        environment.write("create a list") { try $0.createWishlist(title: "New list") }
+                    Button("New Folder", systemImage: "folder.badge.plus") {
+                        environment.write("create a folder") { try $0.createFolder(title: String(localized: "New Folder")) }
                     }
                 }
                 ToolbarItem(placement: .status) {
@@ -32,64 +40,64 @@ struct ContentView: View {
                 }
             }
         } detail: {
-            if let list = wishlists.first(where: { $0.objectID == selection }) {
-                WishlistDetailView(list: list)
+            // A folder deleted elsewhere (another device, a revoked share) drops out
+            // of the fetch, and the placeholder takes its place.
+            if let folder = folders.first(where: { $0.objectID == selection }) {
+                FolderDetailView(folder: folder)
             } else {
-                ContentUnavailableView("Select a list", systemImage: "gift")
+                ContentUnavailableView("No Folder Selected", systemImage: "folder")
             }
         }
     }
+
+    private func delete(_ folder: Folder) {
+        environment.write("delete a folder") { try $0.delete(folder) }
+    }
 }
 
-private struct WishlistDetailView: View {
+private struct FolderDetailView: View {
     @Environment(AppEnvironment.self) private var environment
-    @ObservedObject private var list: WishlistMO
-    @FetchRequest private var items: FetchedResults<WishItemMO>
+    @ObservedObject private var folder: Folder
+    @FetchRequest private var items: FetchedResults<Item>
 
-    init(list: WishlistMO) {
-        self.list = list
-        let request = NSFetchRequest<WishItemMO>(entityName: AppNameModel.Entity.wishItem)
-        request.predicate = NSPredicate(format: "wishlist == %@", list)
-        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
-        _items = FetchRequest(fetchRequest: request)
+    init(folder: Folder) {
+        self.folder = folder
+        _items = FetchRequest(fetchRequest: Item.sortedFetchRequest(in: folder))
     }
 
-    /// `false` on a list shared to this user read-only.
-    private var canEdit: Bool { environment.store.canUpdate(list) }
+    /// `false` on a folder shared to this user read-only.
+    private var canEdit: Bool { environment.store.canEdit(folder) }
 
     var body: some View {
         List {
             ForEach(items, id: \.objectID) { item in
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title ?? "Untitled")
-                    if let note = item.note, !note.isEmpty {
-                        Text(note).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-                .accessibilityElement(children: .combine)
+                Text(item.title ?? "")
             }
             .onDelete { offsets in
                 let doomed = offsets.map { items[$0] }
-                environment.write("delete an item") { try $0.delete(doomed) }
+                environment.write("delete an item") { store in try doomed.forEach(store.delete) }
             }
             .deleteDisabled(!canEdit)
         }
-        .navigationTitle(list.title ?? "Untitled")
+        .overlay {
+            if items.isEmpty {
+                ContentUnavailableView("No Items", systemImage: "doc")
+            }
+        }
+        .navigationTitle(folder.title ?? "")
         .toolbar {
-            if canEdit, let id = list.id {
-                ToolbarItem {
-                    Button("Add item", systemImage: "plus") {
-                        environment.write("add an item") {
-                            try $0.addItem(to: id, title: "New item", note: nil, url: nil)
-                        }
+            ToolbarItem {
+                Button("New Item", systemImage: "plus") {
+                    environment.write("create an item") {
+                        try $0.createItem(in: folder, title: String(localized: "New Item"))
                     }
                 }
+                .disabled(!canEdit)
             }
-            // Temporary: the system share sheet, so a second iCloud account can be
-            // invited. Hidden while sync is off.
+            // The system share sheet, shown only while sync is on.
             if let shareItem {
                 ToolbarItem {
-                    ShareLink(item: shareItem, preview: SharePreview(list.title ?? "Untitled")) {
+                    ShareLink(item: shareItem, preview: SharePreview(folder.title ?? "")) {
                         Label("Share", systemImage: "person.crop.circle.badge.plus")
                     }
                 }
@@ -98,9 +106,8 @@ private struct WishlistDetailView: View {
     }
 
     private var shareItem: CloudShareItem? {
-        guard let id = list.id else { return nil }
         do {
-            return try environment.store.shareItem(forWishlist: id)
+            return try environment.store.shareItem(for: folder)
         } catch {
             Log.sharing.error("share lookup failed: \(error.localizedDescription, privacy: .public)")
             return nil
@@ -109,8 +116,12 @@ private struct WishlistDetailView: View {
 }
 
 #Preview {
-    let persistence = PersistenceController.preview()
+    let environment = AppEnvironment(persistence: PersistenceController(inMemory: true))
+    environment.write("create preview content") { store in
+        let folder = try store.createFolder(title: String(localized: "New Folder"))
+        try store.createItem(in: folder, title: String(localized: "New Item"))
+    }
     return ContentView()
-        .environment(\.managedObjectContext, persistence.container.viewContext)
-        .environment(AppEnvironment(persistence: persistence))
+        .environment(\.managedObjectContext, environment.viewContext)
+        .environment(environment)
 }

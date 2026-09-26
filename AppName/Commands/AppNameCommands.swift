@@ -12,8 +12,8 @@ struct AppNameCommands: Commands {
         // Command-N is the system's New Window. The action goes through the store port, so the command is
         // independent of any particular screen.
         CommandGroup(after: .newItem) {
-            Button("New List") {
-                environment.write("create a list") { try $0.createWishlist(title: "New List") }
+            Button("New Folder") {
+                environment.write("create a folder") { try $0.createFolder(title: String(localized: "New Folder")) }
             }
             .keyboardShortcut("n", modifiers: [.command, .shift])
         }

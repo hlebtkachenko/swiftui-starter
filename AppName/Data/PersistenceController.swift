@@ -27,9 +27,9 @@ final class PersistenceController {
     /// local until an account appears.
     static let cloudKitContainerIdentifier: String? = nil
 
-    /// File name of the second persistent store that holds wishlists shared *to*
+    /// File name of the second persistent store that holds folders shared *to*
     /// this user by others. CloudKit requires a dedicated `.shared`-scope store to
-    /// receive a `CKShare` participation; the user's own wishlists stay in the
+    /// receive a `CKShare` participation; the user's own folders stay in the
     /// `.private`-scope default store.
     static let sharedStoreFileName = "shared.sqlite"
 
@@ -38,14 +38,6 @@ final class PersistenceController {
     /// One model for every container in the process: a fresh model per container
     /// makes several entity descriptions claim the same managed-object subclass.
     private static let model = AppNameModel.make()
-
-    /// An in-memory controller pre-populated with deterministic sample data, for
-    /// SwiftUI previews.
-    static func preview() -> PersistenceController {
-        let controller = PersistenceController(inMemory: true)
-        try? SampleData.populate(controller.container.viewContext)
-        return controller
-    }
 
     init(inMemory: Bool) {
         container = NSPersistentCloudKitContainer(name: "AppName", managedObjectModel: Self.model)
@@ -62,12 +54,12 @@ final class PersistenceController {
             description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
             description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
             if let identifier = Self.cloudKitContainerIdentifier {
-                // Private-scope store: the user's own wishlists.
+                // Private-scope store: the user's own folders.
                 let privateOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: identifier)
                 privateOptions.databaseScope = .private
                 description.cloudKitContainerOptions = privateOptions
 
-                // Shared-scope store: wishlists shared *to* this user land here once
+                // Shared-scope store: folders shared *to* this user land here once
                 // their CKShare invitation is accepted. Same model and configuration
                 // as the private store (only the database scope differs), which is the
                 // supported sharing setup — unlike the configuration-scoped split that

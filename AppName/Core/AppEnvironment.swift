@@ -16,7 +16,7 @@ final class AppEnvironment {
     static let shared = AppEnvironment(persistence: .shared)
 
     let persistence: PersistenceController
-    let store: CoreDataAppNameStore
+    let store: AppNameStore
     let sync: SyncMonitor
     let connectivity: Connectivity
 
@@ -24,7 +24,7 @@ final class AppEnvironment {
 
     init(persistence: PersistenceController) {
         self.persistence = persistence
-        self.store = CoreDataAppNameStore(persistence)
+        self.store = AppNameStore(persistence)
         self.sync = SyncMonitor()
         self.connectivity = Connectivity(containerIdentifier: PersistenceController.cloudKitContainerIdentifier)
 
@@ -62,7 +62,7 @@ final class AppEnvironment {
 
     /// Run a store write from a view or command. The store has already rolled back
     /// a failed save; this records the failure instead of dropping it.
-    func write(_ action: String, _ body: (CoreDataAppNameStore) throws -> Void) {
+    func write(_ action: String, _ body: (AppNameStore) throws -> Void) {
         do {
             try body(store)
         } catch {
@@ -86,13 +86,13 @@ final class AppEnvironment {
 
     #if DEBUG
     /// Test-only affordance: when the app is launched with `-seedProbe <title>`,
-    /// insert one wishlist with that title. Used to verify cross-device CloudKit
+    /// insert one folder with that title. Used to verify cross-device CloudKit
     /// sync from the command line (create on one device, observe it sync to
     /// another). Compiled out of Release builds.
     private func seedSyncProbeIfRequested() {
         guard let title = UserDefaults.standard.string(forKey: "seedProbe"), !title.isEmpty else { return }
-        Log.app.notice("seeding sync probe wishlist: \(title, privacy: .public)")
-        write("seed the sync probe") { try $0.createWishlist(title: title) }
+        Log.app.notice("seeding sync probe folder: \(title, privacy: .public)")
+        write("seed the sync probe") { try $0.createFolder(title: title) }
     }
     #endif
 
