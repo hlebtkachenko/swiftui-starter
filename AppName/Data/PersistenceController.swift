@@ -19,7 +19,7 @@ final class PersistenceController {
     /// fresh clone launches without any iCloud setup.
     ///
     /// To turn sync on: create the container in the Apple Developer portal, set
-    /// its identifier in `AppName.entitlements` and `Info.plist`, then set this to
+    /// its identifier in `AppName.entitlements`, then set this to
     /// that identifier (for example `"iCloud.dev.hapd.appname"`). It must stay
     /// `nil` until the container exists, because activating CloudKit against an
     /// unprovisioned container hard-crashes on launch (an uncatchable trap on
@@ -100,6 +100,19 @@ final class PersistenceController {
                 Log.persistence.error("persistent store load issue: \(error.localizedDescription, privacy: .public)")
             }
         }
+        #if DEBUG
+        // Push the model's record types to the CloudKit Development environment.
+        // Opt-in per launch (`-initializeCloudKitSchema YES`): it is slow and needs
+        // a signed-in account. Deploy to Production from the CloudKit console.
+        if !inMemory, Self.cloudKitContainerIdentifier != nil,
+           UserDefaults.standard.bool(forKey: "initializeCloudKitSchema") {
+            do {
+                try container.initializeCloudKitSchema()
+            } catch {
+                Log.persistence.error("CloudKit schema initialization failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        #endif
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
     }
