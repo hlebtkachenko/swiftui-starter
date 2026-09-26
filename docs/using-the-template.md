@@ -38,7 +38,6 @@ git mv ${NEW}/Commands/AppNameCommands.swift ${NEW}/Commands/${NEW}Commands.swif
 git mv ${NEW}/Data/AppNameModel.swift ${NEW}/Data/${NEW}Model.swift
 git mv ${NEW}/Data/AppNameStore.swift ${NEW}/Data/${NEW}Store.swift
 git mv ${NEW}Tests/AppNameTests.swift ${NEW}Tests/${NEW}Tests.swift
-git mv ${NEW}UITests/AppNameUITests.swift ${NEW}UITests/${NEW}UITests.swift
 git mv ${NEW}UITests/AppNameUITestsLaunchTests.swift ${NEW}UITests/${NEW}UITestsLaunchTests.swift
 ```
 
