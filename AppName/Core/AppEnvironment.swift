@@ -64,15 +64,9 @@ final class AppEnvironment {
     }
     #endif
 
-    /// The single status to show in chrome, composed from account, network, and
-    /// sync. Account and offline take precedence over raw sync progress.
+    /// The single status to show in chrome (see `SyncState.display`).
     var displayState: SyncState {
-        if connectivity.account != .available {
-            return .accountUnavailable(reason: connectivity.account.label)
-        }
-        if !connectivity.isOnline {
-            return .offline
-        }
-        return sync.state
+        SyncState.display(account: connectivity.account, isOnline: connectivity.isOnline,
+                          sync: sync.state, storeError: sync.storeLoadError)
     }
 }

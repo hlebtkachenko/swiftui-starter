@@ -15,9 +15,14 @@ import Observation
 final class SyncMonitor {
     private(set) var state: SyncState = .idle
     private(set) var lastSync: Date?
+    /// A store-load failure. It outranks every sync event and nothing clears it.
+    private(set) var storeLoadError: String?
 
-    private var activePhases: Set<CloudSyncEvent.Kind> = []
-    private var lastErrorMessage: String?
+    /// In-flight events, keyed by event identifier: the private and shared stores
+    /// can run events of the same kind at once.
+    private var activeEvents: Set<UUID> = []
+    /// The last failed event's message; cleared only by an event that finishes OK.
+    private var eventError: String?
 
     /// Begin observing the live event stream. Safe to call once at launch; with no
     /// CloudKit container (tests, previews) no events ever arrive and it stays idle.
@@ -39,27 +44,36 @@ final class SyncMonitor {
     /// Fold one event into the current state. Public for testing.
     func ingest(_ event: CloudSyncEvent) {
         if event.inProgress {
-            activePhases.insert(event.kind)
+            activeEvents.insert(event.id)
         } else {
-            activePhases.remove(event.kind)
-            if event.errorDescription == nil {
+            activeEvents.remove(event.id)
+            if let message = event.errorDescription {
+                eventError = message
+            } else {
+                eventError = nil
                 lastSync = Date()
             }
         }
-        lastErrorMessage = event.errorDescription
         recomputeState()
     }
 
     /// Surface a store-load failure that would otherwise be swallowed at startup.
-    func report(storeLoadError: Error) {
-        lastErrorMessage = SyncErrorMapper.describe(storeLoadError)
+    func report(storeLoadError error: Error) {
+        storeLoadError = SyncErrorMapper.describe(error)
+        recomputeState()
+    }
+
+    /// Surface a one-off CloudKit failure (for example accepting a share). The
+    /// next event that finishes cleanly clears it.
+    func report(_ error: Error) {
+        eventError = SyncErrorMapper.describe(error)
         recomputeState()
     }
 
     private func recomputeState() {
-        if let message = lastErrorMessage {
+        if let message = storeLoadError ?? eventError {
             state = .error(message: message)
-        } else if !activePhases.isEmpty {
+        } else if !activeEvents.isEmpty {
             state = .syncing
         } else {
             state = .idle

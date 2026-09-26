@@ -21,6 +21,16 @@ enum SyncState: Equatable, Sendable {
         case .error(let message): message
         }
     }
+
+    /// The single status to show in chrome. A store-load failure wins, then an
+    /// unusable iCloud account, then being offline, then sync progress. An account
+    /// still being checked (`.unknown`) shows nothing rather than a false alarm.
+    static func display(account: AccountState, isOnline: Bool, sync: SyncState, storeError: String?) -> SyncState {
+        if let storeError { return .error(message: storeError) }
+        if account != .available, account != .unknown { return .accountUnavailable(reason: account.label) }
+        if !isOnline { return .offline }
+        return sync
+    }
 }
 
 /// The iCloud account condition, mapped off CloudKit's `CKAccountStatus` so the
@@ -50,8 +60,8 @@ enum AccountState: Equatable, Sendable {
         case .noAccount: "Sign in to iCloud to sync"
         case .restricted: "iCloud is restricted on this device"
         case .temporarilyUnavailable: "iCloud is temporarily unavailable"
-        case .couldNotDetermine: "Checking iCloud account…"
-        case .unknown: "iCloud account status unknown"
+        case .couldNotDetermine: "Couldn't check the iCloud account"
+        case .unknown: "Checking iCloud account…"
         }
     }
 }
@@ -61,18 +71,21 @@ enum AccountState: Equatable, Sendable {
 struct CloudSyncEvent: Sendable, Equatable {
     enum Kind: Sendable, Equatable { case setup, importData, export, unknown }
 
+    var id: UUID
     var kind: Kind
     /// `true` while the phase is running (no end date yet).
     var inProgress: Bool
     var errorDescription: String?
 
-    init(kind: Kind, inProgress: Bool, errorDescription: String? = nil) {
+    init(id: UUID = UUID(), kind: Kind, inProgress: Bool, errorDescription: String? = nil) {
+        self.id = id
         self.kind = kind
         self.inProgress = inProgress
         self.errorDescription = errorDescription
     }
 
     init(_ event: NSPersistentCloudKitContainer.Event) {
+        self.id = event.identifier
         switch event.type {
         case .setup: self.kind = .setup
         case .import: self.kind = .importData
@@ -80,7 +93,7 @@ struct CloudSyncEvent: Sendable, Equatable {
         @unknown default: self.kind = .unknown
         }
         self.inProgress = event.endDate == nil
-        self.errorDescription = event.error?.localizedDescription
+        self.errorDescription = event.error.map(SyncErrorMapper.describe)
     }
 }
 
