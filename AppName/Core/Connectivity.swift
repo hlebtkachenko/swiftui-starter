@@ -21,20 +21,21 @@ final class Connectivity {
     }
 
     func start() {
-        Task { [weak self] in
-            for await path in NWPathMonitor() {
-                self?.isOnline = path.status == .satisfied
+        // Without CloudKit nothing syncs, so being offline is not worth a chip.
+        if containerIdentifier != nil {
+            Task { [weak self] in
+                for await path in NWPathMonitor() {
+                    self?.isOnline = path.status == .satisfied
+                }
             }
         }
+        // Subscribe before the first check so a change during it is not missed.
+        let accountChanges = NotificationCenter.default.notifications(named: .CKAccountChanged)
         Task { [weak self] in
-            await self?.observeAccount()
-        }
-    }
-
-    private func observeAccount() async {
-        await refreshAccount()
-        for await _ in NotificationCenter.default.notifications(named: .CKAccountChanged) {
-            await refreshAccount()
+            await self?.refreshAccount()
+            for await _ in accountChanges {
+                await self?.refreshAccount()
+            }
         }
     }
 
