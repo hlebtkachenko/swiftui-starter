@@ -31,14 +31,14 @@ final class CoreDataAppNameStore: AppNameStore {
         mo.id = UUID()
         mo.title = title
         mo.createdAt = Date()
-        try context.save()
+        try save()
         return Self.map(mo)
     }
 
     func deleteWishlist(id: UUID) throws {
         guard let mo = try fetchWishlist(id) else { throw AppNameStoreError.wishlistNotFound(id) }
         context.delete(mo)
-        try context.save()
+        try save()
     }
 
     // MARK: Items
@@ -60,17 +60,28 @@ final class CoreDataAppNameStore: AppNameStore {
         mo.urlString = url?.absoluteString
         mo.createdAt = Date()
         mo.wishlist = list
-        try context.save()
+        try save()
         return Self.map(mo)
     }
 
     func deleteItem(id: UUID) throws {
         guard let mo = try fetchItem(id) else { throw AppNameStoreError.itemNotFound(id) }
         context.delete(mo)
-        try context.save()
+        try save()
     }
 
-    // MARK: Fetch helpers
+    // MARK: Saving and fetching
+
+    /// Save, or roll back the unsaved changes and rethrow, so a failed write never
+    /// lingers in the context to be retried by an unrelated later save.
+    private func save() throws {
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
 
     private func fetchWishlist(_ id: UUID) throws -> WishlistMO? {
         try first(WishlistMO.self, entity: AppNameModel.Entity.wishlist, where: NSPredicate(format: "id == %@", id as CVarArg))
