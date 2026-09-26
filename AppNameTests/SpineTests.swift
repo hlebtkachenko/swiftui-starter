@@ -25,19 +25,21 @@ import CloudKit
 
     @Test func completedImportReturnsToIdle() {
         let monitor = SyncMonitor()
-        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: true))
-        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: false))
+        let id = UUID()
+        monitor.ingest(CloudSyncEvent(id: id, kind: .importData, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: id, kind: .importData, inProgress: false))
         #expect(monitor.state == .idle)
         #expect(monitor.lastSync != nil)
     }
 
     @Test func concurrentPhasesStaySyncingUntilAllFinish() {
         let monitor = SyncMonitor()
-        monitor.ingest(CloudSyncEvent(kind: .setup, inProgress: true))
-        monitor.ingest(CloudSyncEvent(kind: .export, inProgress: true))
-        monitor.ingest(CloudSyncEvent(kind: .setup, inProgress: false))
+        let setup = UUID(), export = UUID()
+        monitor.ingest(CloudSyncEvent(id: setup, kind: .setup, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: export, kind: .export, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: setup, kind: .setup, inProgress: false))
         #expect(monitor.state == .syncing)
-        monitor.ingest(CloudSyncEvent(kind: .export, inProgress: false))
+        monitor.ingest(CloudSyncEvent(id: export, kind: .export, inProgress: false))
         #expect(monitor.state == .idle)
     }
 
@@ -90,15 +92,42 @@ import CloudKit
 
     // MARK: Composed display state
 
-    @Test func displayStatePrefersAccountThenNetworkThenSync() {
-        let env = AppEnvironment(persistence: PersistenceController(inMemory: true))
-        // In-memory store, no CloudKit container -> connectivity reports available
-        // only after start(); the default is .unknown, which is "not available".
-        // Drive sync underneath and confirm account/network take precedence.
-        if case .accountUnavailable = env.displayState {
-            // Expected: unknown account is surfaced before sync.
-        } else {
-            Issue.record("expected account precedence while account is unknown")
-        }
+    @Test(arguments: [
+        (AccountState.available, true, SyncState.syncing, String?.none, SyncState.syncing),
+        (.unknown, true, .idle, nil, .idle),
+        (.noAccount, true, .syncing, nil, .accountUnavailable(reason: "Sign in to iCloud to sync")),
+        (.available, false, .syncing, nil, .offline),
+        (.noAccount, false, .idle, "disk full", .error(message: "disk full")),
+    ])
+    func displayStatePrecedence(account: AccountState, isOnline: Bool, sync: SyncState,
+                                storeError: String?, expected: SyncState) {
+        #expect(SyncState.display(account: account, isOnline: isOnline, sync: sync, storeError: storeError) == expected)
+    }
+
+    // MARK: Error persistence
+
+    @Test func eventErrorSurvivesAnInProgressEvent() {
+        let monitor = SyncMonitor()
+        monitor.ingest(CloudSyncEvent(kind: .export, inProgress: false, errorDescription: "boom"))
+        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: true))
+        #expect(monitor.state == .error(message: "boom"))
+    }
+
+    @Test func twoEventsOfTheSameKindStaySyncingUntilBothFinish() {
+        let monitor = SyncMonitor()
+        let privateStore = UUID(), sharedStore = UUID()
+        monitor.ingest(CloudSyncEvent(id: privateStore, kind: .importData, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: sharedStore, kind: .importData, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: privateStore, kind: .importData, inProgress: false))
+        #expect(monitor.state == .syncing)
+        monitor.ingest(CloudSyncEvent(id: sharedStore, kind: .importData, inProgress: false))
+        #expect(monitor.state == .idle)
+    }
+
+    @Test func storeLoadErrorPersistsThroughCleanEvents() {
+        let monitor = SyncMonitor()
+        monitor.report(storeLoadError: NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "load failed"]))
+        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: false))
+        #expect(monitor.state == .error(message: "load failed"))
     }
 }
