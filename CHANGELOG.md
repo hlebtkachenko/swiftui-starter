@@ -27,6 +27,8 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 - `ContentState`, `AppRouter`, the `FamilySharing` protocol and member/role types, `SampleData`, the `GiftClaim` feature, the store protocol, the dead app-delegate share handler, and unused privacy reasons and build settings.
 
 ### Added
+- A `build` workflow with the required `Build and test` check: macOS unit tests and an iOS Simulator build-for-testing on every PR that touches Swift or project files (docs-only PRs skip the macOS job).
+- The weekly CodeQL probe re-enables itself on each run, so GitHub's 60-day inactivity rule is less likely to switch it off.
 - CodeGraph code index for agents: project-scoped MCP server in `.mcp.json`, `mcp__codegraph__*` allowed in `.claude/settings.json`, a Conductor setup script that builds the gitignored `.codegraph/` index per workspace. ADR-0004 records it as developer tooling, not an app dependency.
 
 ## [0.2.1] - 2026-06-20

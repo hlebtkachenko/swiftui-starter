@@ -16,7 +16,7 @@ A greenfield app in 2026 built against the OS 27 SDK should adopt the current Sw
 
 - Data races become compile-time errors, caught before they ship.
 - The concurrency learning curve is steeper, eased materially by main-actor-by-default for a UI app.
-- Building requires a Mac on a macOS version that runs Xcode 27 (see Apple's Xcode 27 release notes).
+- Building requires a Mac on macOS 26.6 or later, per Xcode 27's `LSMinimumSystemVersion` (read from the installed Xcode 27.0 `Info.plist` on 2026-09-26). Running the macOS app and its tests needs macOS 27.
 
 ## Links
 

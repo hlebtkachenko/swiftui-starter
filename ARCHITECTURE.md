@@ -72,7 +72,7 @@ Apple frameworks only, no third-party packages: CloudKit and `CKShare`, Network,
 ## 6. Deployment and infrastructure
 
 - Distribution: App Store and TestFlight (Xcode Cloud per ADR-0014; not configured in this repo).
-- GitHub Actions: `gitleaks`, `guard` (the `.github/scripts/check-*.sh` scripts), `pr-check`, `codeql` (Swift build on macOS), `release-check` on `v*` tags. The `main` ruleset is code in `.github/rulesets/main.json`. Detail: [docs/ci-cd.md](docs/ci-cd.md).
+- GitHub Actions: `gitleaks`, `guard` (the `.github/scripts/check-*.sh` scripts), `pr-check`, `build` (unit tests on macOS, iOS Simulator build-for-testing), `codeql` (traced Swift build, weekly probe), `release-check` on `v*` tags. The `main` ruleset is code in `.github/rulesets/main.json`. Detail: [docs/ci-cd.md](docs/ci-cd.md).
 - Monitoring: `Log` categories in Console / Instruments, MetricKit reports received through the async `MetricManager` and logged, Xcode Organizer crash reports. Nothing leaves the device through the app.
 
 ## 7. Security considerations
