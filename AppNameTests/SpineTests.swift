@@ -124,6 +124,15 @@ import CloudKit
         #expect(monitor.state == .idle)
     }
 
+    @Test func reportedErrorSurvivesACleanEventUntilDismissed() {
+        let monitor = SyncMonitor()
+        monitor.report(NSError(domain: "test", code: 2, userInfo: [NSLocalizedDescriptionKey: "accept failed"]))
+        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: false))
+        #expect(monitor.state == .error(message: "accept failed"))
+        monitor.dismissReportedError()
+        #expect(monitor.state == .idle)
+    }
+
     @Test func storeLoadErrorPersistsThroughCleanEvents() {
         let monitor = SyncMonitor()
         monitor.report(storeLoadError: NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "load failed"]))
