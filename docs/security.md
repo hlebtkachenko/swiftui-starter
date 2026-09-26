@@ -5,7 +5,7 @@ The single home for engineering security rules. `AGENTS.md` carries the short bo
 ## Secrets
 
 - **Never** hardcode API keys, tokens, passwords, certificates, or provisioning profiles in source, `Info.plist`, asset catalogs, or any tracked `.xcconfig`.
-- Secrets live in an untracked `Secrets.xcconfig` (gitignored) injected at build time, as encrypted **GitHub Actions secrets** in CI, and in the **Keychain** at runtime. Never in `UserDefaults` or source.
+- Secrets live in an untracked `Secrets.xcconfig` (gitignored) injected at build time, as encrypted **GitHub Actions secrets** in CI (non-secret per-repo values such as `BUNDLE_ID_PREFIX` are repository variables), and in the **Keychain** at runtime. Never in `UserDefaults` or source.
 - Signing assets (`*.p12`, `*.p8`, `*.mobileprovision`, `*.cer`) are never committed. Use an App Store Connect API key stored as a CI secret, or fastlane match with an encrypted store.
 - If a secret is ever committed: **assume it is compromised (the repo is public), rotate it immediately,** then purge it from history. Never "fix" it with a follow-up delete commit.
 

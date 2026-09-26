@@ -1,8 +1,9 @@
 "$schema" = "https://conductor.build/schemas/settings.repo.schema.json"
 
-# Copy the gitignored signing secret into every new Conductor workspace.
-# Secrets.xcconfig holds DEVELOPMENT_TEAM and is never committed (public repo);
-# without this, new worktrees miss it and code signing fails.
+# Copy the gitignored per-user settings into every new Conductor workspace.
+# Secrets.xcconfig holds DEVELOPMENT_TEAM and BUNDLE_ID_PREFIX and is never
+# committed (public repo); without it, new worktrees fall back to com.example
+# and code signing fails.
 file_include_globs = "Secrets.xcconfig"
 
 [scripts]
