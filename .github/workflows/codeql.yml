@@ -3,7 +3,7 @@ name: codeql
 # CodeQL's Swift extractor requires a full, tracer-wrapped build, and that build
 # is inherently slow (~17 min on a macOS runner) for a SwiftUI app. The cost is
 # the CodeQL tracer re-precompiling every imported system module (SwiftUI,
-# CloudKit, CoreData, ...) on every run; it is NOT our ~950 lines of code, which
+# CloudKit, CoreData, ...) on every run; it is NOT our own code, which
 # compile in seconds. This was measured: the same build untraced takes 30 s, and
 # neither caching the precompiled modules nor pre-warming them before the traced
 # build helped (the tracer redoes the work regardless).
