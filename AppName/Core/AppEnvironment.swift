@@ -1,4 +1,5 @@
 import CoreData
+import MetricKit
 import Observation
 import OSLog
 import SwiftUI
@@ -33,12 +34,22 @@ final class AppEnvironment {
     func start() {
         sync.start()
         connectivity.start()
-        #if os(iOS)
-        MetricsSubscriber.shared.startReceiving()
-        #endif
+        receiveMetrics()
         #if DEBUG
         seedSyncProbeIfRequested()
         #endif
+    }
+
+    /// Log MetricKit metric and diagnostic reports (ADR-0012). The system delivers
+    /// at most one batch per day; first-party only, nothing leaves the device.
+    private func receiveMetrics() {
+        let metrics = MetricManager()
+        Task {
+            for await _ in metrics.metricReports { Log.app.info("MetricKit metric report received") }
+        }
+        Task {
+            for await _ in metrics.diagnosticReports { Log.app.error("MetricKit diagnostic report received") }
+        }
     }
 
     #if DEBUG

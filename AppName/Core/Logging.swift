@@ -4,7 +4,7 @@ import OSLog
 /// log output is filterable in Console and Instruments and stray `NSLog`/`print`
 /// calls can be retired (ADR-0012). `Logger` is `Sendable`, so these are safe to
 /// touch from any isolation.
-enum Log {
+nonisolated enum Log {
     static let subsystem = "dev.hapd.appname"
 
     static let app = Logger(subsystem: subsystem, category: "app")
