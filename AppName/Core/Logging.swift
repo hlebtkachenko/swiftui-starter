@@ -11,4 +11,5 @@ nonisolated enum Log {
     static let persistence = Logger(subsystem: subsystem, category: "persistence")
     static let sync = Logger(subsystem: subsystem, category: "sync")
     static let connectivity = Logger(subsystem: subsystem, category: "connectivity")
+    static let sharing = Logger(subsystem: subsystem, category: "sharing")
 }

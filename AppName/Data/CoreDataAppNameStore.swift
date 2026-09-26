@@ -125,7 +125,18 @@ extension CoreDataAppNameStore {
         guard let container else { throw AppNameStoreError.cloudKitUnavailable }
         guard let list = try fetchWishlist(id) else { throw AppNameStoreError.wishlistNotFound(id) }
         let (_, share, _) = try await container.share([list], to: nil)
+        share[CKShare.SystemFieldKey.title] = (list.title ?? "") as CKRecordValue
         return share
+    }
+
+    /// What `ShareLink` needs for a wishlist: its existing share, or a handler that
+    /// creates one. `nil` while sync is off, since there is no container to share in.
+    func shareItem(forWishlist id: UUID) throws -> CloudShareItem? {
+        guard let identifier = PersistenceController.cloudKitContainerIdentifier else { return nil }
+        return CloudShareItem(container: CKContainer(identifier: identifier),
+                              existing: try existingShare(forWishlist: id)) { [self] in
+            try await shareWishlist(id: id)
+        }
     }
 
     /// The existing share for a wishlist, if it is already shared.

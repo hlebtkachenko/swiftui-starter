@@ -1,3 +1,4 @@
+import CloudKit
 import CoreData
 import MetricKit
 import Observation
@@ -10,6 +11,10 @@ import SwiftUI
 /// launch from a `PersistenceController`.
 @Observable
 final class AppEnvironment {
+    /// The app's environment. The system delivers accepted shares to app and
+    /// scene delegates that SwiftUI creates, so they reach the spine through this.
+    static let shared = AppEnvironment(persistence: .shared)
+
     let persistence: PersistenceController
     let store: CoreDataAppNameStore
     let sync: SyncMonitor
@@ -48,6 +53,20 @@ final class AppEnvironment {
         }
         Task {
             for await _ in metrics.diagnosticReports { Log.app.error("MetricKit diagnostic report received") }
+        }
+    }
+
+    /// Accept a share invitation into the shared store; a failure shows in the sync status.
+    func acceptShare(_ metadata: CKShare.Metadata) {
+        Log.sharing.notice("accepting CloudKit share")
+        Task {
+            do {
+                try await store.acceptShare(metadata)
+                Log.sharing.notice("CloudKit share accepted")
+            } catch {
+                Log.sharing.error("CloudKit share accept failed: \(error.localizedDescription, privacy: .public)")
+                sync.report(error)
+            }
         }
     }
 

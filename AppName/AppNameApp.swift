@@ -3,7 +3,7 @@ import CoreData
 
 @main
 struct AppNameApp: App {
-    @State private var environment = AppEnvironment(persistence: .shared)
+    @State private var environment = AppEnvironment.shared
     #if os(iOS)
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     #elseif os(macOS)

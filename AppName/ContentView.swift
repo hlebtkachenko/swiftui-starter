@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import OSLog
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var context
@@ -46,6 +47,7 @@ struct ContentView: View {
 
 private struct WishlistDetailView: View {
     @Environment(\.managedObjectContext) private var context
+    @Environment(AppEnvironment.self) private var environment
     private let wishlistID: UUID
     private let title: String
     @FetchRequest private var items: FetchedResults<WishItemMO>
@@ -79,27 +81,26 @@ private struct WishlistDetailView: View {
                     _ = try? store.addItem(to: wishlistID, title: "New item", note: nil, url: nil)
                 }
             }
-            #if os(iOS)
-            ToolbarItem {
-                Button("Share", systemImage: "person.crop.circle.badge.plus") {
-                    shareThisWishlist()
+            // Temporary: the system share sheet, so a second iCloud account can be
+            // invited. Hidden while sync is off.
+            if let shareItem {
+                ToolbarItem {
+                    ShareLink(item: shareItem, preview: SharePreview(title)) {
+                        Label("Share", systemImage: "person.crop.circle.badge.plus")
+                    }
                 }
             }
-            #endif
         }
     }
 
-    #if os(iOS)
-    // Temporary: present the system sharing sheet for this wishlist so a second
-    // iCloud account can be invited.
-    private func shareThisWishlist() {
-        let request = NSFetchRequest<WishlistMO>(entityName: AppNameModel.Entity.wishlist)
-        request.predicate = NSPredicate(format: "id == %@", wishlistID as CVarArg)
-        request.fetchLimit = 1
-        guard let list = try? context.fetch(request).first else { return }
-        presentWishlistShare(for: list)
+    private var shareItem: CloudShareItem? {
+        do {
+            return try environment.store.shareItem(forWishlist: wishlistID)
+        } catch {
+            Log.sharing.error("share lookup failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
-    #endif
 }
 
 #Preview {
