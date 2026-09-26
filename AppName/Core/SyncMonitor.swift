@@ -10,25 +10,30 @@ import Observation
 /// the two for display. The event stream is reduced to a `Sendable`
 /// `CloudSyncEvent` at the boundary, so `ingest(_:)` is unit-testable without a
 /// live container.
-@MainActor
 @Observable
 final class SyncMonitor {
     private(set) var state: SyncState = .idle
     private(set) var lastSync: Date?
-    /// Whether the first CloudKit import has finished. Lets a screen tell "new and
-    /// empty" apart from "empty because the first sync has not landed yet".
-    private(set) var hasCompletedFirstImport = false
+    /// A store-load failure. It outranks every sync event and nothing clears it.
+    private(set) var storeLoadError: String?
 
-    private var activePhases: Set<CloudSyncEvent.Kind> = []
-    private var lastErrorMessage: String?
+    /// In-flight events, keyed by event identifier: the private and shared stores
+    /// can run events of the same kind at once.
+    private var activeEvents: Set<UUID> = []
+    /// The last failed event's message; cleared only by an event that finishes OK.
+    private var eventError: String?
+    /// A one-off failure reported from outside the event stream (for example
+    /// accepting a share). Sync events never clear it; the user dismisses it.
+    private var reportedError: String?
 
-    /// Begin observing the live event stream. Safe to call once at launch; with no
-    /// CloudKit container (tests, previews) no events ever arrive and it stays idle.
+    /// Begin observing the live event stream. Call once, as early as possible: the
+    /// subscription is made before this returns, so early setup events are not
+    /// missed. With no CloudKit container no events arrive and it stays idle.
     func start() {
+        let stream = NotificationCenter.default.notifications(
+            named: NSPersistentCloudKitContainer.eventChangedNotification
+        )
         Task { [weak self] in
-            let stream = NotificationCenter.default.notifications(
-                named: NSPersistentCloudKitContainer.eventChangedNotification
-            )
             for await note in stream {
                 guard
                     let raw = note.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey]
@@ -42,28 +47,41 @@ final class SyncMonitor {
     /// Fold one event into the current state. Public for testing.
     func ingest(_ event: CloudSyncEvent) {
         if event.inProgress {
-            activePhases.insert(event.kind)
+            activeEvents.insert(event.id)
         } else {
-            activePhases.remove(event.kind)
-            if event.errorDescription == nil {
+            activeEvents.remove(event.id)
+            if let message = event.errorDescription {
+                eventError = message
+            } else {
+                eventError = nil
                 lastSync = Date()
-                if event.kind == .importData { hasCompletedFirstImport = true }
             }
         }
-        lastErrorMessage = event.errorDescription
         recomputeState()
     }
 
     /// Surface a store-load failure that would otherwise be swallowed at startup.
-    func report(storeLoadError: Error) {
-        lastErrorMessage = SyncErrorMapper.describe(storeLoadError).message
+    func report(storeLoadError error: Error) {
+        storeLoadError = SyncErrorMapper.describe(error)
+        recomputeState()
+    }
+
+    /// Surface a one-off CloudKit failure (for example accepting a share). It stays
+    /// until `dismissReportedError()` or the next report replaces it.
+    func report(_ error: Error) {
+        reportedError = SyncErrorMapper.describe(error)
+        recomputeState()
+    }
+
+    func dismissReportedError() {
+        reportedError = nil
         recomputeState()
     }
 
     private func recomputeState() {
-        if let message = lastErrorMessage {
+        if let message = storeLoadError ?? reportedError ?? eventError {
             state = .error(message: message)
-        } else if !activePhases.isEmpty {
+        } else if !activeEvents.isEmpty {
             state = .syncing
         } else {
             state = .idle

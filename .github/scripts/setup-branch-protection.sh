@@ -3,7 +3,7 @@
 #
 # GitHub rulesets are repository settings, not files, so a fork or copy does NOT
 # inherit them. Run this once after creating your repo to reproduce the
-# protection described in docs/ci-cd.md: PR required, the four required status
+# protection described in docs/ci-cd.md: PR required, the required status
 # checks, linear history, and no force-push or deletion.
 #
 # Requires the `gh` CLI, authenticated, with admin on the repo.

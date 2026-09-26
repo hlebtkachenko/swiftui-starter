@@ -1,50 +1,38 @@
 # AppName
 
-A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, Mac), built for **OS 26** with Apple's **Liquid Glass** design. Swift 6, zero third-party dependencies, App Store / TestFlight shaped.
+A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, Mac), built for **OS 27** (iOS / iPadOS / macOS 27, Xcode 27) with Apple's **Liquid Glass** design. Swift 6, zero third-party dependencies, App Store / TestFlight shaped.
 
 `AppName` is a placeholder. Rename it to your app, drop in your own domain, and ship.
 
-> **Status:** template, version 0.1.0. Ships a working spine plus one example feature. See [STATE.md](STATE.md).
+> **Status:** template. Ships a working spine plus a generic Folder / Item example shared through CloudKit + `CKShare`. See [STATE.md](STATE.md).
 
 ## What you get
 
-- **App spine** (`AppName/Core`, `AppName/Commands`, `AppName/Views`) - domain-agnostic and multiplatform: an `@Observable AppEnvironment` composition root (store, `AppRouter`, sync and connectivity monitors) injected into every scene, a shared `Commands` layer, a macOS `Settings` scene, CloudKit sync-state surfacing (`SyncState`, `ContentState<T>`, `SyncStatusChip`), an `OSLog` logging facade, a MetricKit subscriber (iOS), and a `PrivacyInfo.xcprivacy` manifest.
-- **CloudKit + `CKShare` data layer** (`AppName/Data`, `AppName/Sharing`) - a programmatic Core Data model behind `NSPersistentCloudKitContainer`, a protocol-isolated store with an in-memory test double, paired `.private` / `.shared` stores, and `CKShare` role mapping. Demonstrated through one example feature (a family wishlist) you replace with your own.
-- **Tests** - Swift Testing for logic, XCTest for UI and launch.
-- **CI gates and governance** - gitleaks, guard, pr-check, CodeQL; a `LICENSE`, a `SECURITY.md`, and founding [Architecture Decision Records](docs/adr/README.md) documenting the stack and the OS 26 research behind it.
+- A domain-agnostic app spine: composition root, router, sync and connectivity monitors, shared commands, macOS Settings, `OSLog` and MetricKit, a privacy manifest.
+- A CloudKit + `CKShare` data layer (one store class, an in-memory store for tests), shown through a generic Folder / Item example with no seed data, which you replace.
+- Swift Testing for logic, XCTest for UI.
+- CI gates (gitleaks, guard, pr-check; CodeQL suspended until it supports Xcode 27), a reproducible `main` ruleset, and founding [Architecture Decision Records](docs/adr/README.md).
+
+Code layout: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Getting started
 
-Full walkthrough: [docs/using-the-template.md](docs/using-the-template.md). In short:
-
-1. **Clone** and enable the local hooks: `git config core.hooksPath .githooks`.
-2. **Rename** `AppName` to your app: find/replace `AppName` (and the lowercase `appname` in the bundle ID / container) across the tree, then rename the `AppName*` folders, files, and `AppName.xcodeproj`. Bundle IDs default to `dev.hapd.appname`; change the prefix to your own.
-3. **Signing:** copy `Secrets.xcconfig.example` to `Secrets.xcconfig` and set `DEVELOPMENT_TEAM` (gitignored, never committed).
-4. **Build:**
-
-   ```bash
-   xcodebuild build -scheme AppName -destination 'platform=iOS Simulator,name=iPhone 17'
-   xcodebuild build -scheme AppName -destination 'platform=macOS'
-   ```
-
-5. **Replace the example domain** in `AppName/Data` with your own model and views.
-6. **Turn on CloudKit (optional):** provision an iCloud container, set its identifier in `AppName.entitlements`, `AppName/Info.plist`, and `cloudKitContainerIdentifier` in `PersistenceController.swift` (it is `nil` by default, so the template runs as a local store with no iCloud setup).
-7. **Protect `main`:** branch protection is a repo setting, not a file, so it does not carry over on copy. Reproduce it with `./.github/scripts/setup-branch-protection.sh` (needs the `gh` CLI with admin on your repo). See [docs/ci-cd.md](docs/ci-cd.md).
+Follow [docs/using-the-template.md](docs/using-the-template.md): copy, rename `AppName`, set the signing team, build, protect `main`, replace the example domain. CloudKit sync is off until you provision a container, so a fresh copy runs as a local store.
 
 ## Constraints
 
-- Minimum OS 26 (iOS / iPadOS / macOS). No back-deployment.
-- Liquid Glass only - genuine system APIs (`glassEffect`, `GlassEffectContainer`, `.glass` / `.glassProminent`); never faked with blurs or gradients. This is the reason for the OS 26 floor.
+- No back-deployment below OS 27.
+- Liquid Glass only through genuine system APIs (`glassEffect`, `GlassEffectContainer`, `.glass` / `.glassProminent`), never faked with blurs or gradients; that is why the floor tracks the newest OS.
 
-`main` is protected by a ruleset (checked in at `.github/rulesets/main.json`, applied with the script above); every pull request must pass **gitleaks**, **guard**, **pr-check**, and **CodeQL**. CI passes with **no repository secrets configured** - a fresh copy is green out of the box (`DEVELOPMENT_TEAM` and `FORBIDDEN_STRINGS` are optional). Releases are tagged `vX.Y.Z` and validated against the changelog.
+Every pull request to `main` must pass gitleaks, guard, and pr-check (CodeQL rejoins once it supports Xcode 27). CI needs **no repository secrets** to go green. Releases are tagged `vX.Y.Z`; see [docs/ci-cd.md](docs/ci-cd.md).
 
 ## Documentation
 
-- [docs/using-the-template.md](docs/using-the-template.md) - step-by-step guide to start a new app from this template
-- [STATE.md](STATE.md) - what the template provides and how to start a new app from it
-- [AGENTS.md](AGENTS.md) - working guidance for AI agents and contributors (`CLAUDE.md` is a symlink to it)
-- [docs/](docs/README.md) - engineering, security, CI/CD, and the ADRs
-- [CHANGELOG.md](CHANGELOG.md) - history and the `vX.Y.Z` versioning scheme
+- [AGENTS.md](AGENTS.md) - instructions for AI agents and contributors: commands, local gate, gotchas
+- [ARCHITECTURE.md](ARCHITECTURE.md) - code layout and data flow
+- [STATE.md](STATE.md) - what the template provides today
+- [docs/](docs/README.md) - the docs map: CI/CD, security, patterns, ADRs
+- [CHANGELOG.md](CHANGELOG.md) - history
 
 ## License
 

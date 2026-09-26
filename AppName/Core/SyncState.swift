@@ -3,7 +3,7 @@ import CoreData
 import Foundation
 
 /// What the data spine is doing, surfaced to the UI. Domain-agnostic: it knows
-/// nothing about wishlists, only about sync, account, and network health.
+/// nothing about the app's data, only about sync, account, and network health.
 enum SyncState: Equatable, Sendable {
     case idle
     case syncing
@@ -20,6 +20,16 @@ enum SyncState: Equatable, Sendable {
         case .accountUnavailable(let reason): reason
         case .error(let message): message
         }
+    }
+
+    /// The single status to show in chrome. A store-load failure wins, then an
+    /// unusable iCloud account, then being offline, then sync progress. An account
+    /// still being checked (`.unknown`) shows nothing rather than a false alarm.
+    static func display(account: AccountState, isOnline: Bool, sync: SyncState, storeError: String?) -> SyncState {
+        if let storeError { return .error(message: storeError) }
+        if account != .available, account != .unknown { return .accountUnavailable(reason: account.label) }
+        if !isOnline { return .offline }
+        return sync
     }
 }
 
@@ -50,8 +60,8 @@ enum AccountState: Equatable, Sendable {
         case .noAccount: "Sign in to iCloud to sync"
         case .restricted: "iCloud is restricted on this device"
         case .temporarilyUnavailable: "iCloud is temporarily unavailable"
-        case .couldNotDetermine: "Checking iCloud account…"
-        case .unknown: "iCloud account status unknown"
+        case .couldNotDetermine: "Couldn't check the iCloud account"
+        case .unknown: "Checking iCloud account…"
         }
     }
 }
@@ -61,18 +71,21 @@ enum AccountState: Equatable, Sendable {
 struct CloudSyncEvent: Sendable, Equatable {
     enum Kind: Sendable, Equatable { case setup, importData, export, unknown }
 
+    var id: UUID
     var kind: Kind
     /// `true` while the phase is running (no end date yet).
     var inProgress: Bool
     var errorDescription: String?
 
-    init(kind: Kind, inProgress: Bool, errorDescription: String? = nil) {
+    init(id: UUID = UUID(), kind: Kind, inProgress: Bool, errorDescription: String? = nil) {
+        self.id = id
         self.kind = kind
         self.inProgress = inProgress
         self.errorDescription = errorDescription
     }
 
     init(_ event: NSPersistentCloudKitContainer.Event) {
+        self.id = event.identifier
         switch event.type {
         case .setup: self.kind = .setup
         case .import: self.kind = .importData
@@ -80,20 +93,14 @@ struct CloudSyncEvent: Sendable, Equatable {
         @unknown default: self.kind = .unknown
         }
         self.inProgress = event.endDate == nil
-        self.errorDescription = event.error?.localizedDescription
+        self.errorDescription = event.error.map(SyncErrorMapper.describe)
     }
 }
 
-/// A human-facing read of a sync error plus whether the system retries it on its
-/// own. Pure and testable; CloudKit is inspected via the bridged `NSError` so no
-/// `CKError` value has to be constructed by callers.
-struct SyncErrorInfo: Equatable, Sendable {
-    var message: String
-    var isRetryable: Bool
-}
-
+/// A human-facing read of a sync error. Pure and testable; CloudKit is inspected
+/// via the bridged `NSError` so no `CKError` value has to be constructed by callers.
 enum SyncErrorMapper {
-    static func describe(_ error: Error) -> SyncErrorInfo {
+    static func describe(_ error: Error) -> String {
         let ns = error as NSError
         if ns.domain == CKErrorDomain {
             switch ns.code {
@@ -102,16 +109,16 @@ enum SyncErrorMapper {
                  CKError.Code.serviceUnavailable.rawValue,
                  CKError.Code.requestRateLimited.rawValue,
                  CKError.Code.zoneBusy.rawValue:
-                return SyncErrorInfo(message: "A network problem interrupted sync. It will retry automatically.", isRetryable: true)
+                return "A network problem interrupted sync. It will retry automatically."
             case CKError.Code.quotaExceeded.rawValue:
-                return SyncErrorInfo(message: "Your iCloud storage is full. Free up space to keep syncing.", isRetryable: false)
+                return "Your iCloud storage is full. Free up space to keep syncing."
             case CKError.Code.notAuthenticated.rawValue:
-                return SyncErrorInfo(message: "Sign in to iCloud to sync.", isRetryable: false)
+                return "Sign in to iCloud to sync."
             default:
-                return SyncErrorInfo(message: "Sync hit a problem and will retry.", isRetryable: true)
+                return "Sync hit a problem and will retry."
             }
         }
         let fallback = ns.localizedDescription.isEmpty ? "Sync hit a problem and will retry." : ns.localizedDescription
-        return SyncErrorInfo(message: fallback, isRetryable: true)
+        return fallback
     }
 }

@@ -4,7 +4,7 @@ import CloudKit
 @testable import AppName
 
 /// Headless tests for the app spine: the sync state machine, error mapping,
-/// account mapping, and the router. None of these need a live CloudKit container
+/// and account mapping. None of these need a live CloudKit container
 /// (ADR-0013); the event stream is fed as `Sendable` `CloudSyncEvent` values.
 @MainActor
 @Suite struct SpineTests {
@@ -15,7 +15,6 @@ import CloudKit
         let monitor = SyncMonitor()
         #expect(monitor.state == .idle)
         #expect(monitor.lastSync == nil)
-        #expect(monitor.hasCompletedFirstImport == false)
     }
 
     @Test func importInProgressReportsSyncing() {
@@ -24,22 +23,23 @@ import CloudKit
         #expect(monitor.state == .syncing)
     }
 
-    @Test func completedImportReturnsToIdleAndMarksFirstImport() {
+    @Test func completedImportReturnsToIdle() {
         let monitor = SyncMonitor()
-        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: true))
-        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: false))
+        let id = UUID()
+        monitor.ingest(CloudSyncEvent(id: id, kind: .importData, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: id, kind: .importData, inProgress: false))
         #expect(monitor.state == .idle)
-        #expect(monitor.hasCompletedFirstImport == true)
         #expect(monitor.lastSync != nil)
     }
 
     @Test func concurrentPhasesStaySyncingUntilAllFinish() {
         let monitor = SyncMonitor()
-        monitor.ingest(CloudSyncEvent(kind: .setup, inProgress: true))
-        monitor.ingest(CloudSyncEvent(kind: .export, inProgress: true))
-        monitor.ingest(CloudSyncEvent(kind: .setup, inProgress: false))
+        let setup = UUID(), export = UUID()
+        monitor.ingest(CloudSyncEvent(id: setup, kind: .setup, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: export, kind: .export, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: setup, kind: .setup, inProgress: false))
         #expect(monitor.state == .syncing)
-        monitor.ingest(CloudSyncEvent(kind: .export, inProgress: false))
+        monitor.ingest(CloudSyncEvent(id: export, kind: .export, inProgress: false))
         #expect(monitor.state == .idle)
     }
 
@@ -61,29 +61,24 @@ import CloudKit
 
     // MARK: Error mapping
 
-    @Test func mapsQuotaExceededAsNonRetryable() {
+    @Test func mapsQuotaExceeded() {
         let error = NSError(domain: CKErrorDomain, code: CKError.Code.quotaExceeded.rawValue)
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.isRetryable == false)
-        #expect(info.message.contains("storage"))
+        #expect(SyncErrorMapper.describe(error).contains("storage"))
     }
 
-    @Test func mapsNetworkFailureAsRetryable() {
+    @Test func mapsNetworkFailure() {
         let error = NSError(domain: CKErrorDomain, code: CKError.Code.networkUnavailable.rawValue)
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.isRetryable == true)
+        #expect(SyncErrorMapper.describe(error).contains("network"))
     }
 
-    @Test func mapsNotAuthenticatedAsNonRetryable() {
+    @Test func mapsNotAuthenticated() {
         let error = NSError(domain: CKErrorDomain, code: CKError.Code.notAuthenticated.rawValue)
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.isRetryable == false)
+        #expect(SyncErrorMapper.describe(error).contains("Sign in"))
     }
 
     @Test func mapsNonCloudKitErrorWithItsDescription() {
         let error = NSError(domain: "other", code: 7, userInfo: [NSLocalizedDescriptionKey: "disk gone"])
-        let info = SyncErrorMapper.describe(error)
-        #expect(info.message == "disk gone")
+        #expect(SyncErrorMapper.describe(error) == "disk gone")
     }
 
     // MARK: Account mapping
@@ -95,29 +90,53 @@ import CloudKit
         #expect(AccountState(.couldNotDetermine) == .couldNotDetermine)
     }
 
-    // MARK: Router
-
-    @Test func routerSelectAndReset() {
-        let router = AppRouter()
-        #expect(router.selection == nil)
-        let id = UUID()
-        router.select(id)
-        #expect(router.selection == id)
-        router.reset()
-        #expect(router.selection == nil)
-    }
-
     // MARK: Composed display state
 
-    @Test func displayStatePrefersAccountThenNetworkThenSync() {
-        let env = AppEnvironment(persistence: PersistenceController(inMemory: true))
-        // In-memory store, no CloudKit container -> connectivity reports available
-        // only after start(); the default is .unknown, which is "not available".
-        // Drive sync underneath and confirm account/network take precedence.
-        if case .accountUnavailable = env.displayState {
-            // Expected: unknown account is surfaced before sync.
-        } else {
-            Issue.record("expected account precedence while account is unknown")
-        }
+    @Test(arguments: [
+        (AccountState.available, true, SyncState.syncing, String?.none, SyncState.syncing),
+        (.unknown, true, .idle, nil, .idle),
+        (.noAccount, true, .syncing, nil, .accountUnavailable(reason: "Sign in to iCloud to sync")),
+        (.available, false, .syncing, nil, .offline),
+        (.noAccount, false, .idle, "disk full", .error(message: "disk full")),
+    ])
+    func displayStatePrecedence(account: AccountState, isOnline: Bool, sync: SyncState,
+                                storeError: String?, expected: SyncState) {
+        #expect(SyncState.display(account: account, isOnline: isOnline, sync: sync, storeError: storeError) == expected)
+    }
+
+    // MARK: Error persistence
+
+    @Test func eventErrorSurvivesAnInProgressEvent() {
+        let monitor = SyncMonitor()
+        monitor.ingest(CloudSyncEvent(kind: .export, inProgress: false, errorDescription: "boom"))
+        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: true))
+        #expect(monitor.state == .error(message: "boom"))
+    }
+
+    @Test func twoEventsOfTheSameKindStaySyncingUntilBothFinish() {
+        let monitor = SyncMonitor()
+        let privateStore = UUID(), sharedStore = UUID()
+        monitor.ingest(CloudSyncEvent(id: privateStore, kind: .importData, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: sharedStore, kind: .importData, inProgress: true))
+        monitor.ingest(CloudSyncEvent(id: privateStore, kind: .importData, inProgress: false))
+        #expect(monitor.state == .syncing)
+        monitor.ingest(CloudSyncEvent(id: sharedStore, kind: .importData, inProgress: false))
+        #expect(monitor.state == .idle)
+    }
+
+    @Test func reportedErrorSurvivesACleanEventUntilDismissed() {
+        let monitor = SyncMonitor()
+        monitor.report(NSError(domain: "test", code: 2, userInfo: [NSLocalizedDescriptionKey: "accept failed"]))
+        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: false))
+        #expect(monitor.state == .error(message: "accept failed"))
+        monitor.dismissReportedError()
+        #expect(monitor.state == .idle)
+    }
+
+    @Test func storeLoadErrorPersistsThroughCleanEvents() {
+        let monitor = SyncMonitor()
+        monitor.report(storeLoadError: NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "load failed"]))
+        monitor.ingest(CloudSyncEvent(kind: .importData, inProgress: false))
+        #expect(monitor.state == .error(message: "load failed"))
     }
 }

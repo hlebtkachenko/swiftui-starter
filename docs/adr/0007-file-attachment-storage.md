@@ -4,7 +4,7 @@
 
 ## Context
 
-AppName stores images and small files (gift photos and similar). With a pure-Apple stack and no server, the storage must travel with the synced data and respect the sharing model.
+An app built from this template may store images and small files. With a pure-Apple stack and no server, the storage must travel with the synced data and respect the sharing model.
 
 ## Decision
 

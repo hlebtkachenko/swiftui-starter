@@ -17,7 +17,7 @@ AppName needs to find items and lists quickly. Core Data has no built-in full-te
 - Search is zero-dependency, native, and integrated with the OS for free.
 - Core Spotlight adds a small indexing write path alongside saves; an acceptable cost.
 - Implementation (verified 2026-06-09): attach `NSCoreDataCoreSpotlightDelegate` to the store description with persistent history enabled and call `startSpotlightIndexing()`; it works through `NSPersistentCloudKitContainer` (a subclass). Use `CSUserQuery` for the in-app search bar (it adds suggestions) and `CSSearchQuery` for background queries.
-- Later enhancement, not v1: `SpotlightSearchTool`, which exposes the Spotlight index to a Foundation Models session, is iOS 27.0 beta, above our floor.
+- Later enhancement, not v1: `SpotlightSearchTool`, which exposes the Spotlight index to a Foundation Models session, was introduced with the OS 27 SDKs and is within the floor, but is not adopted in v1.
 
 ## Links
 

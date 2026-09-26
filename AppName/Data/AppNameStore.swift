@@ -1,79 +1,123 @@
-import Foundation
+import CloudKit
+import CoreData
 
-// Domain value types that cross the persistence boundary. They are `Sendable`
-// and free of Core Data, so app logic and headless tests never touch
-// `NSManagedObject` (ADR-0013).
+/// The app's writes and CloudKit sharing over one context: the view context for
+/// the app, an in-memory context for tests and previews (ADR-0013). Views read
+/// through `@FetchRequest`; every write goes through here so a failed save is
+/// rolled back.
+final class AppNameStore {
+    private let context: NSManagedObjectContext
+    private let container: NSPersistentCloudKitContainer?
 
-/// A shared family list. The shareable root of the owner-visible content.
-struct Wishlist: Identifiable, Sendable, Equatable {
-    let id: UUID
-    var title: String
-    var createdAt: Date
-}
+    init(context: NSManagedObjectContext, container: NSPersistentCloudKitContainer? = nil) {
+        self.context = context
+        self.container = container
+    }
 
-/// An item on a wishlist. Owner-visible, family-shared content.
-struct WishItem: Identifiable, Sendable, Equatable {
-    let id: UUID
-    var wishlistID: UUID
-    var title: String
-    var note: String?
-    var url: URL?
-    var createdAt: Date
-}
+    convenience init(_ persistence: PersistenceController) {
+        self.init(context: persistence.container.viewContext, container: persistence.container)
+    }
 
-/// Where a giver is in the act of giving.
-enum ClaimStatus: Int16, Sendable, CaseIterable {
-    case considering
-    case claimed
-    case purchased
-}
+    // MARK: Writes
 
-/// A giver's claim on an item. Kept off the owner-visible item record so the
-/// wishlist owner never sees a spoiler (ADR-0006). The `itemID` is a loose
-/// reference, deliberately not a Core Data relationship, so a claim never joins
-/// the item's shared object graph and can live in a separate giver-only
-/// store/share/zone.
-struct GiftClaim: Identifiable, Sendable, Equatable {
-    let id: UUID
-    let itemID: UUID
-    var claimedBy: String
-    var status: ClaimStatus
-    var claimedAt: Date
-}
+    @discardableResult
+    func createFolder(title: String) throws -> Folder {
+        let folder = Folder(context: context)
+        folder.title = title
+        try save()
+        return folder
+    }
 
-/// The persistence/sync port. App logic depends on this protocol, not on Core
-/// Data or CloudKit, so the same logic runs against an in-memory store in
-/// headless tests and against `NSPersistentCloudKitContainer` at runtime
-/// (ADR-0005, ADR-0013).
-@MainActor
-protocol AppNameStore {
-    // Wishlists and items (owner-visible, family-shared content).
-    func wishlists() throws -> [Wishlist]
-    @discardableResult func createWishlist(title: String) throws -> Wishlist
-    func deleteWishlist(id: UUID) throws
-    func items(in wishlistID: UUID) throws -> [WishItem]
-    @discardableResult func addItem(to wishlistID: UUID, title: String, note: String?, url: URL?) throws -> WishItem
-    func deleteItem(id: UUID) throws
+    @discardableResult
+    func createItem(in folder: Folder, title: String) throws -> Item {
+        let item = Item(context: context)
+        item.title = title
+        item.folder = folder
+        try save()
+        return item
+    }
 
-    // Gift claims (the giver-only partition).
-    @discardableResult func setClaim(itemID: UUID, by participant: String, status: ClaimStatus) throws -> GiftClaim
-    func removeClaim(itemID: UUID, by participant: String) throws
-    /// Every claim recorded for an item. In production the wishlist owner is not
-    /// a participant of the claims zone and so has none of these rows locally.
-    func claims(forItem itemID: UUID) throws -> [GiftClaim]
-}
+    func delete(_ object: NSManagedObject) throws {
+        context.delete(object)
+        try save()
+    }
 
-extension AppNameStore {
-    /// Claims a viewer is allowed to see. The wishlist owner sees none, which
-    /// preserves the surprise (ADR-0006). This encodes the partition rule for
-    /// callers and tests even before CloudKit zone separation is wired.
-    func visibleClaims(forItem itemID: UUID, viewerIsOwner: Bool) throws -> [GiftClaim] {
-        viewerIsOwner ? [] : try claims(forItem: itemID)
+    /// Save, or roll back the unsaved changes and rethrow, so a failed write never
+    /// lingers in the context to be retried by an unrelated later save.
+    private func save() throws {
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
+    /// Whether the user may change this object: `false` on a share they joined
+    /// read-only. Always `true` without CloudKit.
+    func canEdit(_ object: NSManagedObject) -> Bool {
+        container?.canUpdateRecord(forManagedObjectWith: object.objectID) ?? true
+    }
+
+    /// Whether the user may delete this object. Always `true` without CloudKit.
+    func canDelete(_ object: NSManagedObject) -> Bool {
+        container?.canDeleteRecord(forManagedObjectWith: object.objectID) ?? true
+    }
+
+    // MARK: Sharing (CKShare)
+
+    // These need a provisioned container and an iCloud account, so they run on
+    // device, not in headless tests. They throw `cloudKitUnavailable` when the
+    // store was built with `init(context:)` and so has no container.
+
+    /// What `ShareLink` needs for a folder: its existing share, or a handler that
+    /// creates one. `nil` while sync is off, since there is no container to share in.
+    func shareItem(for folder: Folder) throws -> CloudShareItem? {
+        guard let identifier = PersistenceController.cloudKitContainerIdentifier else { return nil }
+        let folderID = folder.objectID
+        return CloudShareItem(container: CKContainer(identifier: identifier),
+                              existing: try existingShare(for: folder)) { [self] in
+            try await share(folderID)
+        }
+    }
+
+    /// The existing share for a folder, if it is already shared.
+    func existingShare(for folder: Folder) throws -> CKShare? {
+        guard let container else { throw AppNameStoreError.cloudKitUnavailable }
+        return try container.fetchShares(matching: [folder.objectID])[folder.objectID]
+    }
+
+    /// Accept an invitation received from the system share flow.
+    func acceptShare(_ metadata: CKShare.Metadata) async throws {
+        guard let container, let store = sharedStore(container) else {
+            throw AppNameStoreError.cloudKitUnavailable
+        }
+        _ = try await container.acceptShareInvitations(from: [metadata], into: store)
+    }
+
+    /// Create a `CKShare` over a folder and its items, titled after the folder. The
+    /// share item may be stale by the time the sheet asks, and `share(_:to:)` fails
+    /// for an already-shared object, so an existing share is returned first.
+    private func share(_ folderID: NSManagedObjectID) async throws -> CKShare {
+        guard let container else { throw AppNameStoreError.cloudKitUnavailable }
+        if let existing = try container.fetchShares(matching: [folderID])[folderID] {
+            return existing
+        }
+        let folder = try context.existingObject(with: folderID)
+        let (_, share, _) = try await container.share([folder], to: nil)
+        share[CKShare.SystemFieldKey.title] = ((folder as? Folder)?.title ?? "") as CKRecordValue
+        return share
+    }
+
+    /// The `.shared`-scope persistent store that accepted shares land in (matched
+    /// by file name).
+    private func sharedStore(_ container: NSPersistentCloudKitContainer) -> NSPersistentStore? {
+        container.persistentStoreCoordinator.persistentStores.first {
+            $0.url?.lastPathComponent == PersistenceController.sharedStoreFileName
+        }
     }
 }
 
 enum AppNameStoreError: Error, Equatable {
-    case wishlistNotFound(UUID)
-    case itemNotFound(UUID)
     case cloudKitUnavailable
 }

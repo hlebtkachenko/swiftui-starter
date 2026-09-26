@@ -8,7 +8,7 @@
 
 ## Type
 
-<!-- One of: feat | fix | docs | refactor | test | ci | chore | perf | build | style -->
+<!-- One of: feat | fix | docs | refactor | test | ci | chore | perf | build | style | revert -->
 
 ## Changes
 

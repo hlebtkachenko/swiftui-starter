@@ -4,3 +4,8 @@
 # Secrets.xcconfig holds DEVELOPMENT_TEAM and is never committed (public repo);
 # without this, new worktrees miss it and code signing fails.
 file_include_globs = "Secrets.xcconfig"
+
+[scripts]
+# Build or refresh the local CodeGraph index (.codegraph/, gitignored) in each new
+# workspace. Skips quietly when the codegraph CLI is not installed.
+setup = "if ! command -v codegraph >/dev/null 2>&1; then echo 'codegraph not installed, skipping index'; elif [ -d .codegraph ]; then codegraph sync; else codegraph init --yes; fi"

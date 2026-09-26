@@ -128,6 +128,14 @@ node_modules/
 .playwright/
 .playwright-mcp/
 
+# Agent tooling: only the shared Claude settings are tracked
+.claude/*
+!.claude/settings.json
+.claude/handoffs/
+.claude/progress.md
+CLAUDE.local.md
+.codegraph/
+
 # Conductor workspace, junk, and local scratch
 .context/
 _junk/

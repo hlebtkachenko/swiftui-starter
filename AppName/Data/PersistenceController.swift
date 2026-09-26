@@ -5,12 +5,6 @@ import OSLog
 /// Builds the Core Data stack. `shared` uses `NSPersistentCloudKitContainer`;
 /// `inMemory` uses an ephemeral store with no CloudKit, which is the headless
 /// test and preview double (ADR-0013).
-///
-/// The gift-claim partition (ADR-0006) is enforced by the model (a claim
-/// references its item by UUID, never by relationship) and by the visibility rule
-/// on `AppNameStore`. The physical CloudKit zone/share separation that excludes the
-/// wishlist owner is a follow-up; for now a single store carries every entity.
-@MainActor
 final class PersistenceController {
     let container: NSPersistentCloudKitContainer
 
@@ -24,7 +18,7 @@ final class PersistenceController {
     /// fresh clone launches without any iCloud setup.
     ///
     /// To turn sync on: create the container in the Apple Developer portal, set
-    /// its identifier in `AppName.entitlements` and `Info.plist`, then set this to
+    /// its identifier in `AppName.entitlements`, then set this to
     /// that identifier (for example `"iCloud.dev.hapd.appname"`). It must stay
     /// `nil` until the container exists, because activating CloudKit against an
     /// unprovisioned container hard-crashes on launch (an uncatchable trap on
@@ -33,24 +27,20 @@ final class PersistenceController {
     /// local until an account appears.
     static let cloudKitContainerIdentifier: String? = nil
 
-    /// File name of the second persistent store that holds wishlists shared *to*
+    /// File name of the second persistent store that holds folders shared *to*
     /// this user by others. CloudKit requires a dedicated `.shared`-scope store to
-    /// receive a `CKShare` participation; the user's own wishlists stay in the
+    /// receive a `CKShare` participation; the user's own folders stay in the
     /// `.private`-scope default store.
     static let sharedStoreFileName = "shared.sqlite"
 
     static let shared = PersistenceController(inMemory: false)
 
-    /// An in-memory controller pre-populated with deterministic sample data, for
-    /// SwiftUI previews.
-    static func preview() -> PersistenceController {
-        let controller = PersistenceController(inMemory: true)
-        try? SampleData.populate(controller.container.viewContext)
-        return controller
-    }
+    /// One model for every container in the process: a fresh model per container
+    /// makes several entity descriptions claim the same managed-object subclass.
+    private static let model = AppNameModel.make()
 
     init(inMemory: Bool) {
-        container = NSPersistentCloudKitContainer(name: "AppName", managedObjectModel: AppNameModel.make())
+        container = NSPersistentCloudKitContainer(name: "AppName", managedObjectModel: Self.model)
 
         guard let description = container.persistentStoreDescriptions.first else {
             fatalError("NSPersistentContainer has no default store description")
@@ -64,12 +54,12 @@ final class PersistenceController {
             description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
             description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
             if let identifier = Self.cloudKitContainerIdentifier {
-                // Private-scope store: the user's own wishlists.
+                // Private-scope store: the user's own folders.
                 let privateOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: identifier)
                 privateOptions.databaseScope = .private
                 description.cloudKitContainerOptions = privateOptions
 
-                // Shared-scope store: wishlists shared *to* this user land here once
+                // Shared-scope store: folders shared *to* this user land here once
                 // their CKShare invitation is accepted. Same model and configuration
                 // as the private store (only the database scope differs), which is the
                 // supported sharing setup — unlike the configuration-scoped split that
@@ -101,6 +91,19 @@ final class PersistenceController {
                 Log.persistence.error("persistent store load issue: \(error.localizedDescription, privacy: .public)")
             }
         }
+        #if DEBUG
+        // Push the model's record types to the CloudKit Development environment.
+        // Opt-in per launch (`-initializeCloudKitSchema YES`): it is slow and needs
+        // a signed-in account. Deploy to Production from the CloudKit console.
+        if !inMemory, Self.cloudKitContainerIdentifier != nil,
+           UserDefaults.standard.bool(forKey: "initializeCloudKitSchema") {
+            do {
+                try container.initializeCloudKitSchema()
+            } catch {
+                Log.persistence.error("CloudKit schema initialization failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        #endif
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
     }

@@ -1,110 +1,127 @@
 import SwiftUI
 import CoreData
+import OSLog
 
 struct ContentView: View {
-    @Environment(\.managedObjectContext) private var context
     @Environment(AppEnvironment.self) private var environment
-    @FetchRequest(fetchRequest: WishlistMO.fetchAllRequest()) private var wishlists: FetchedResults<WishlistMO>
-    @State private var selection: UUID?
-
-    private var store: CoreDataAppNameStore { CoreDataAppNameStore(context: context) }
+    @FetchRequest(fetchRequest: Folder.sortedFetchRequest()) private var folders: FetchedResults<Folder>
+    @State private var selection: NSManagedObjectID?
 
     var body: some View {
         NavigationSplitView {
             List(selection: $selection) {
-                ForEach(wishlists, id: \.listID) { list in
-                    Text(list.title ?? "Untitled").tag(list.listID)
+                ForEach(folders, id: \.objectID) { folder in
+                    Text(folder.title ?? "")
+                        .tag(folder.objectID)
+                        .contextMenu {
+                            Button("Delete", systemImage: "trash", role: .destructive) { delete(folder) }
+                                .disabled(!environment.store.canDelete(folder))
+                        }
+                        .deleteDisabled(!environment.store.canDelete(folder))
                 }
-                .onDelete(perform: deleteWishlists)
+                .onDelete { offsets in
+                    offsets.map { folders[$0] }.forEach(delete)
+                }
             }
-            .navigationTitle("Wishlists")
+            .overlay {
+                if folders.isEmpty {
+                    ContentUnavailableView("No Folders", systemImage: "folder")
+                }
+            }
+            .navigationTitle("Folders")
             .toolbar {
                 ToolbarItem {
-                    Button("Add list", systemImage: "plus") {
-                        _ = try? store.createWishlist(title: "New list")
+                    Button("New Folder", systemImage: "folder.badge.plus") {
+                        environment.write("create a folder") { try $0.createFolder(title: String(localized: "New Folder")) }
                     }
                 }
                 ToolbarItem(placement: .status) {
-                    SyncStatusChip(state: environment.displayState)
+                    SyncStatusChip(state: environment.displayState, onDismiss: environment.sync.dismissReportedError)
                 }
             }
         } detail: {
-            if let selection, let list = wishlists.first(where: { $0.listID == selection }) {
-                WishlistDetailView(wishlistID: selection, title: list.title ?? "Untitled")
+            // A folder deleted elsewhere (another device, a revoked share) drops out
+            // of the fetch, and the placeholder takes its place.
+            if let folder = folders.first(where: { $0.objectID == selection }) {
+                FolderDetailView(folder: folder)
             } else {
-                ContentUnavailableView("Select a list", systemImage: "gift")
+                ContentUnavailableView("No Folder Selected", systemImage: "folder")
             }
         }
     }
 
-    private func deleteWishlists(_ offsets: IndexSet) {
-        for index in offsets {
-            try? store.deleteWishlist(id: wishlists[index].listID)
-        }
+    private func delete(_ folder: Folder) {
+        environment.write("delete a folder") { try $0.delete(folder) }
     }
 }
 
-private struct WishlistDetailView: View {
-    @Environment(\.managedObjectContext) private var context
-    private let wishlistID: UUID
-    private let title: String
-    @FetchRequest private var items: FetchedResults<WishItemMO>
+private struct FolderDetailView: View {
+    @Environment(AppEnvironment.self) private var environment
+    @ObservedObject private var folder: Folder
+    @FetchRequest private var items: FetchedResults<Item>
 
-    init(wishlistID: UUID, title: String) {
-        self.wishlistID = wishlistID
-        self.title = title
-        let request = NSFetchRequest<WishItemMO>(entityName: AppNameModel.Entity.wishItem)
-        request.predicate = NSPredicate(format: "wishlist.id == %@", wishlistID as CVarArg)
-        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
-        _items = FetchRequest(fetchRequest: request)
+    init(folder: Folder) {
+        self.folder = folder
+        _items = FetchRequest(fetchRequest: Item.sortedFetchRequest(in: folder))
     }
 
-    private var store: CoreDataAppNameStore { CoreDataAppNameStore(context: context) }
+    /// `false` on a folder shared to this user read-only.
+    private var canEdit: Bool { environment.store.canEdit(folder) }
 
     var body: some View {
         List {
-            ForEach(items, id: \.itemID) { item in
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title ?? "Untitled")
-                    if let note = item.note, !note.isEmpty {
-                        Text(note).font(.caption).foregroundStyle(.secondary)
+            ForEach(items, id: \.objectID) { item in
+                Text(item.title ?? "")
+                    .deleteDisabled(!environment.store.canDelete(item))
+            }
+            .onDelete { offsets in
+                let doomed = offsets.map { items[$0] }
+                environment.write("delete an item") { store in try doomed.forEach(store.delete) }
+            }
+        }
+        .overlay {
+            if items.isEmpty {
+                ContentUnavailableView("No Items", systemImage: "doc")
+            }
+        }
+        .navigationTitle(folder.title ?? "")
+        .toolbar {
+            ToolbarItem {
+                Button("New Item", systemImage: "plus") {
+                    environment.write("create an item") {
+                        try $0.createItem(in: folder, title: String(localized: "New Item"))
+                    }
+                }
+                .disabled(!canEdit)
+            }
+            // The system share sheet, shown only while sync is on.
+            if let shareItem {
+                ToolbarItem {
+                    ShareLink(item: shareItem, preview: SharePreview(folder.title ?? "")) {
+                        Label("Share", systemImage: "person.crop.circle.badge.plus")
                     }
                 }
             }
         }
-        .navigationTitle(title)
-        .toolbar {
-            ToolbarItem {
-                Button("Add item", systemImage: "plus") {
-                    _ = try? store.addItem(to: wishlistID, title: "New item", note: nil, url: nil)
-                }
-            }
-            #if os(iOS)
-            ToolbarItem {
-                Button("Share", systemImage: "person.crop.circle.badge.plus") {
-                    shareThisWishlist()
-                }
-            }
-            #endif
-        }
     }
 
-    #if os(iOS)
-    // Temporary: present the system sharing sheet for this wishlist so a second
-    // iCloud account can be invited.
-    private func shareThisWishlist() {
-        let request = NSFetchRequest<WishlistMO>(entityName: AppNameModel.Entity.wishlist)
-        request.predicate = NSPredicate(format: "id == %@", wishlistID as CVarArg)
-        request.fetchLimit = 1
-        guard let list = try? context.fetch(request).first else { return }
-        presentWishlistShare(for: list)
+    private var shareItem: CloudShareItem? {
+        do {
+            return try environment.store.shareItem(for: folder)
+        } catch {
+            Log.sharing.error("share lookup failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
-    #endif
 }
 
 #Preview {
-    let persistence = PersistenceController.preview()
+    let environment = AppEnvironment(persistence: PersistenceController(inMemory: true))
+    environment.write("create preview content") { store in
+        let folder = try store.createFolder(title: String(localized: "New Folder"))
+        try store.createItem(in: folder, title: String(localized: "New Item"))
+    }
     return ContentView()
-        .environment(\.managedObjectContext, persistence.container.viewContext)
-        .environment(AppEnvironment(persistence: persistence))
+        .environment(\.managedObjectContext, environment.viewContext)
+        .environment(environment)
 }

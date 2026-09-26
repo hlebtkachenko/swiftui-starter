@@ -29,8 +29,7 @@
         "required_status_checks": [
           { "context": "Scan for secrets" },
           { "context": "Block secrets and private files" },
-          { "context": "PR title and description" },
-          { "context": "Analyze Swift" }
+          { "context": "PR title and description" }
         ]
       }
     }

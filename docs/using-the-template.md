@@ -37,9 +37,7 @@ git mv ${NEW}/AppName.entitlements ${NEW}/${NEW}.entitlements
 git mv ${NEW}/Commands/AppNameCommands.swift ${NEW}/Commands/${NEW}Commands.swift
 git mv ${NEW}/Data/AppNameModel.swift ${NEW}/Data/${NEW}Model.swift
 git mv ${NEW}/Data/AppNameStore.swift ${NEW}/Data/${NEW}Store.swift
-git mv ${NEW}/Data/CoreDataAppNameStore.swift ${NEW}/Data/CoreData${NEW}Store.swift
 git mv ${NEW}Tests/AppNameTests.swift ${NEW}Tests/${NEW}Tests.swift
-git mv ${NEW}UITests/AppNameUITests.swift ${NEW}UITests/${NEW}UITests.swift
 git mv ${NEW}UITests/AppNameUITestsLaunchTests.swift ${NEW}UITests/${NEW}UITestsLaunchTests.swift
 ```
 
@@ -58,6 +56,8 @@ cp Secrets.xcconfig.example Secrets.xcconfig
 Edit `Secrets.xcconfig` and replace `YOUR_TEAM_ID`.
 
 ## 4. Build
+
+You need Xcode 27: every target deploys to OS 27 (iOS / iPadOS / macOS 27) and later.
 
 ```
 xcodebuild build -scheme ${NEW} -destination 'platform=macOS'
@@ -78,6 +78,6 @@ See [ci-cd.md](ci-cd.md) for what the ruleset enforces. CI passes with no reposi
 
 ## 6. Make it yours
 
-- Replace the example feature (a family wishlist) in `${NEW}/Data` and `${NEW}/Views` with your own model and views. The app spine in `${NEW}/Core` is domain-agnostic; keep it.
+- Replace the Folder / Item example in `${NEW}/Data` (model, store) and `${NEW}/ContentView.swift` with your own model and views. The app spine in `${NEW}/Core` is domain-agnostic; keep it.
 - Rewrite `README.md`, `STATE.md`, and `CHANGELOG.md` for your app. Revisit any ADR in `docs/adr/` that does not fit, and update the record.
-- CloudKit is **off** by default (`cloudKitContainerIdentifier` is `nil`, so the app runs as a local store). To enable sync: provision an iCloud container, then set its identifier in `PersistenceController.swift`, `${NEW}.entitlements`, and `${NEW}/Info.plist`. Deploy the CloudKit schema Development -> Production before the first external-TestFlight or production build (ADR-0014).
+- CloudKit is **off** by default (`cloudKitContainerIdentifier` is `nil`, so the app runs as a local store). To enable sync: provision an iCloud container, make sure its identifier matches `com.apple.developer.icloud-container-identifiers` in `${NEW}.entitlements` (the rename pass already sets `iCloud.dev.hapd.${LOWER}`), then set `cloudKitContainerIdentifier` in `PersistenceController.swift` to it. `Info.plist` needs no change. Deploy the CloudKit schema Development -> Production before the first external-TestFlight or production build (ADR-0014).

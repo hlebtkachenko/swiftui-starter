@@ -14,8 +14,8 @@ AI could help with suggestions, summaries, and smarter search, but a cloud model
 
 ## Consequences
 
-- On the OS 26 floor only the on-device `SystemLanguageModel` is available (26.0+), and only when the user has Apple Intelligence enabled; gate features on `SystemLanguageModel.default.availability` and degrade gracefully for `.appleIntelligenceNotEnabled`, `.deviceNotEligible`, and `.modelNotReady`. The on-device model has a 4,096-token context, fits summarize/extract/classify/tag/short-generate, and offers a `.contentTagging` use case for categorizing AppName items. Typed output uses `@Generable` (structs and enums only).
-- `PrivateCloudComputeLanguageModel` and third-party providers (the `LanguageModel` protocol) are iOS/macOS 27.0 beta, not on our floor, which keeps the no-cloud-LLM stance automatic for v1.
+- The on-device `SystemLanguageModel` (available since OS 26) is usable only when the user has Apple Intelligence enabled; gate features on `SystemLanguageModel.default.availability` and degrade gracefully for `.appleIntelligenceNotEnabled`, `.deviceNotEligible`, and `.modelNotReady`. The on-device model has a 4,096-token context, fits summarize/extract/classify/tag/short-generate, and offers a `.contentTagging` use case for categorizing AppName items. Typed output uses `@Generable` (structs and enums only).
+- `PrivateCloudComputeLanguageModel` and third-party providers (the `LanguageModel` protocol) were introduced with the OS 27 SDKs, so the OS 27 floor no longer rules them out; excluding cloud and third-party models in v1 is now a policy choice of this record, not a platform limit.
 
 ## Links
 

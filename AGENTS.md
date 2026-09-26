@@ -1,26 +1,19 @@
 # AGENTS.md
 
-Guidance for AI agents (Claude Code, Cursor, Copilot) working in this repo. `CLAUDE.md` is a symlink to this file. Detail lives in `docs/`; current state in `STATE.md`.
+SwiftUI starter template for native multiplatform apps (iPhone, iPad, Mac), App Store and TestFlight shaped. `AppName` is a placeholder renamed per app ([docs/using-the-template.md](docs/using-the-template.md)). A domain-agnostic spine plus a generic shared-collection example (Folder / Item) that exercises CloudKit + `CKShare`, with no seed data; replace the example with the app's own model. Code map: [ARCHITECTURE.md](ARCHITECTURE.md). State: [STATE.md](STATE.md). Decisions: [docs/adr/](docs/adr/README.md).
 
-## This repo
+Public repo, proprietary license: every file and CI log is world-readable.
 
-A SwiftUI starter template for Apple-native, multiplatform apps (iPhone, iPad, Mac): App Store + TestFlight shaped. `AppName` is a placeholder you rename per app (see `README.md`). It ships a domain-agnostic spine plus one example feature (a family wishlist) that demonstrates the CloudKit + `CKShare` stack; replace the example with the real domain.
+## Hard constraints
 
-- **Public repo, proprietary** (`LICENSE`). Treat every file and CI log as world-readable.
-
-## Platform and design (hard constraints)
-
-- Targets: iPhone, iPad, Mac (native, multiplatform SwiftUI).
-- Minimum OS 26 (iOS / iPadOS / macOS 26). No back-deployment.
-- **Liquid Glass only:** use genuine system Liquid Glass APIs (`glassEffect`, `GlassEffectContainer`, `.glass` / `.glassProminent`). Never fake it with blurs, gradients, or third-party imitations. This is why the floor is OS 26.
-
-## Stack
-
-Decided and baked into the template; see `STATE.md` for the table and `docs/adr/` for the rationale. Swift 6 + SwiftUI, single multiplatform target, Observation (`@Observable`), Swift Package Manager (zero third-party deps), CloudKit + `CKShare` via Core Data (`NSPersistentCloudKitContainer`), Swift Testing. When starting a real app, revisit any decision that does not fit and update the ADR.
+- Deployment floor is OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. No back-deployment, no `#available` fallbacks below 27.
+- Liquid Glass through system APIs only (`glassEffect`, `GlassEffectContainer`, `.glass` / `.glassProminent`); never imitated with blurs or gradients (ADR-0001).
+- Zero third-party dependencies; first-party frameworks and SPM only (ADR-0004).
+- No personal or contact data anywhere (emails, names beyond `LICENSE`, infra); support points to GitHub. The `guard` workflow enforces it ([docs/security.md](docs/security.md)).
 
 ## Commands
 
-Scheme `AppName` (rename with the app). Replace the simulator device name with one you have installed (`xcrun simctl list devices`).
+Scheme `AppName` (renamed with the app). Pick an installed simulator with `xcrun simctl list devices`.
 
 ```bash
 xcodebuild build -scheme AppName -destination 'platform=iOS Simulator,name=iPhone 17'
@@ -28,58 +21,38 @@ xcodebuild test  -scheme AppName -destination 'platform=iOS Simulator,name=iPhon
 xcodebuild build -scheme AppName -destination 'platform=macOS'
 ```
 
-Secret scan before pushing (CI enforces the same):
+Local gate (mirrors the `guard` CI job), then the secret scan on staged files:
 
 ```bash
+bash -c 'for s in .github/scripts/check-*.sh; do bash "$s" || exit 1; done'
 gitleaks git --pre-commit --staged --redact --config .gitleaks.toml
 ```
 
-## Boundaries (never)
+Enable the pre-commit hook once per clone: `git config core.hooksPath .githooks`.
 
-- Never commit secrets, credentials, or signing assets. They go in untracked `Secrets.xcconfig`, CI secrets, or the Keychain.
-- Never commit or invent personal/contact info (emails, names beyond the `LICENSE` holder, phones, infra). No contact email anywhere; point to GitHub.
-- Never fake Liquid Glass; never add fallbacks for OS < 26.
-- Never bypass the merge gates.
-- Never duplicate documentation: each topic has one home (mapped in `docs/README.md`); link, do not restate.
+## Gotchas
 
-Detail: `docs/security.md`.
+- New Swift files need no `project.pbxproj` edit: the targets use filesystem-synchronized groups. Do not propose XcodeGen or Tuist (ADR-0015).
+- Signing team lives in the gitignored `Secrets.xcconfig` (from `Secrets.xcconfig.example`), included by `Shared.xcconfig`.
+- CloudKit is off by default: `PersistenceController.cloudKitContainerIdentifier` is `nil`, so the app runs on a local store. Set it only after the container exists in the Developer portal and matches `com.apple.developer.icloud-container-identifiers` in `AppName.entitlements` (`Info.plist` needs nothing): an unprovisioned container crashes at launch.
+- Every write goes through the concrete `AppNameStore` class; its `save()` rolls back and rethrows. Keep CloudKit calls inside the store and persistence types; tests use `PersistenceController(inMemory: true)` (ADR-0013).
+- Identity is `NSManagedObjectID` (no `id` attribute); selection and share closures capture the object ID, never the managed object.
+- Gate edits on `store.canEdit(_:)`: share participants may be read-only.
+- `Shared.xcconfig` sets `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS`, so any new warning fails the build.
+- Docs: each topic has one home, mapped in [docs/README.md](docs/README.md). `check-duplication.sh` fails on any line of 45+ characters repeated verbatim across Markdown files, and `check-ownership-map.sh` fails when a new `.md` file is missing from the map.
+- Accepted ADRs change only by a dated amendment or a superseding record ([docs/adr/README.md](docs/adr/README.md)).
+- Required merge checks: gitleaks, guard, pr-check (Conventional Commits title + description). CodeQL (~17 min macOS build) is suspended as a gate until its tracer works with Xcode 27; it probes weekly and opens a restore PR itself. Detail and the release steps: [docs/ci-cd.md](docs/ci-cd.md).
+- Update `STATE.md` and `CHANGELOG.md` (`## [Unreleased]`) when a change affects them.
 
-## Engineering principles
+<!-- CODEGRAPH_START -->
+## CodeGraph
 
-1. **Think before coding:** surface assumptions and options; ask when unclear.
-2. **Simplicity first:** minimum code, nothing speculative.
-3. **Surgical changes:** touch only what the request needs.
-4. **Goal-driven:** define how you will verify, then loop until it passes.
+In repositories indexed by CodeGraph (a `.codegraph/` directory exists at the repo root), reach for it BEFORE grep/find or reading files when you need to understand or locate code:
 
-Full version and conventions: `docs/engineering.md`.
+- **MCP tool** (when available): `codegraph_explore` answers most code questions in one call — the relevant symbols' verbatim source plus the call paths between them, including dynamic-dispatch hops grep can't follow. Name a file or symbol in the query to read its current line-numbered source. If it's listed but deferred, load it by name via tool search.
+- **Shell** (always works): `codegraph explore "<symbol names or question>"` prints the same output.
 
-## CI gates (must pass to merge)
+If there is no `.codegraph/` directory, skip CodeGraph entirely — indexing is the user's decision.
+<!-- CODEGRAPH_END -->
 
-- `gitleaks` - secret scan.
-- `guard` - blocks tracked secrets/private files, private keys, files over 5 MB, personal data, dead links, duplicate docs, and a stale ownership map.
-- `pr-check` - Conventional Commits title and a real description.
-- `codeql` - Swift scan.
-
-Ruleset and release steps: `docs/ci-cd.md`.
-
-## Done criteria
-
-A task is done when: the change traces to the request and the required gates are green. Update `STATE.md` and `CHANGELOG.md` when they are affected, and the matching issue in whatever tracker the app uses.
-
-## Versioning
-
-Tags `vX.Y.Z`: X major (manual), Y feature (unbounded), Z fix. See `docs/ci-cd.md`.
-
-## Conventions
-
-- English only in code, comments, commits, docs.
-- Conventional Commits (`feat`, `fix`, `docs`, `ci`, `chore`, `refactor`, `test`, `perf`, `build`, `style`, `revert`).
-- Swift API Design Guidelines for naming.
-
-## Index
-
-- `docs/using-the-template.md` - step-by-step guide to start a new app from this template (clone, rename, sign, build, protect).
-- `STATE.md` - what the template provides and how to start a new app from it.
-- `docs/adr/` - architecture decision records: the founding stack decisions, one per record (canonical).
-- `docs/` - engineering, security, CI/CD detail.
-- `CHANGELOG.md` - history and versioning.
+The index is local and gitignored: `codegraph init --yes` builds it (the Conductor setup script in `.conductor/settings.toml` does this per workspace), `codegraph status` checks it. The MCP server is wired project-locally in `.mcp.json`.

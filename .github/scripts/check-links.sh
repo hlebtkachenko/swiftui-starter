@@ -20,7 +20,7 @@ while IFS= read -r f; do
       status=1
     fi
   done <<< "$targets"
-done < <(git ls-files '*.md' ':!CLAUDE.md')
+done < <(git ls-files '*.md')
 
 [ "$status" -eq 0 ] && echo "OK: all relative Markdown links resolve."
 exit "$status"

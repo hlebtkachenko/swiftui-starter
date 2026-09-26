@@ -1,5 +1,7 @@
 # Building a Greenfield OS 26 SwiftUI Multiplatform App (Liquid Glass) — Official Apple Guidance
 
+> **Historical (2026-06-09).** Kept as the evidence behind the founding ADRs and not maintained. The deployment floor has since moved to OS 27 (see [ADR-0001](../adr/0001-platform-os-floor-liquid-glass.md)); where this report and an ADR disagree, the ADR wins.
+
 > **Scope.** A trustworthy, citation-backed research release on Apple's *official* guidance for a brand-new native app targeting iPhone, iPad, and Mac, with a hard floor of **OS 26 only** (iOS 26 / iPadOS 26 / macOS 26 "Tahoe"), built in SwiftUI, adopting genuine system **Liquid Glass**, and shipped via **App Store + TestFlight**.
 >
 > **Neutrality.** Architecture, dependency manager, backend/data, and test framework are presented as *open decisions* with neutral trade-offs, not prescriptions. Where something is Apple-official it is cited to a primary source; where it is community convention it is labeled **[Convention]**.
