@@ -6,12 +6,24 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ## [Unreleased]
 
-Planned as 0.3.0 (a feature release; the major number is the owner's call).
-
 ### Changed
 - **Breaking:** the deployment floor is now OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. Apps that must run on OS 26 should stay on 0.2.x. ADR-0001 and ADR-0002 are amended; ADR-0008 and ADR-0010 note that the OS 27 APIs they mention are now within the floor.
 - Agent setup follows one file: `AGENTS.md` holds the agent instructions and the `CLAUDE.md` symlink is removed. `ARCHITECTURE.md` maps the code. ADR-0015 is amended accordingly.
 - Docs trimmed to one home per topic: `docs/engineering.md` is folded into `docs/patterns.md`, the CI gate tables in `docs/ci-cd.md` are merged, the research report is marked historical, and `README.md` / `STATE.md` point to the guide and `ARCHITECTURE.md` instead of repeating them.
+
+- The family wishlist example is replaced by a generic shared-collection example: `Folder` and `Item` Core Data entities (identity by object ID, `createdAt` as sort key, cascade delete), a system-component UI (split view, empty states, `ShareLink`), and no seed or sample data. `-seedProbe` now creates a folder. Old development stores from the previous model do not open; reinstall.
+- The store is one concrete `AppNameStore` class; the store protocol, value structs, and mapping layer are gone. ADR-0005, 0006, 0007, 0013, and 0016 are amended to drop the family framing.
+
+### Fixed
+- MetricKit reports come through the async `MetricManager`, fixing a main-actor isolation trap in the delegate callback.
+- Sharing reuses an existing `CKShare` instead of creating a new one each time, and the share button shows only when sync is on.
+- Sync errors persist until an event succeeds, and a store-load error keeps precedence in the status chip.
+- A failed save rolls back the context and the error is logged instead of swallowed.
+- Read-only share participants can no longer add, edit, or delete.
+- The spine monitors start once, not once per window; New moves off the macOS New Window shortcut.
+
+### Removed
+- `ContentState`, `AppRouter`, the `FamilySharing` protocol and member/role types, `SampleData`, the `GiftClaim` feature, the store protocol, the dead app-delegate share handler, and unused privacy reasons and build settings.
 
 ### Added
 - CodeGraph code index for agents: project-scoped MCP server in `.mcp.json`, `mcp__codegraph__*` allowed in `.claude/settings.json`, a Conductor setup script that builds the gitignored `.codegraph/` index per workspace. ADR-0004 records it as developer tooling, not an app dependency.
