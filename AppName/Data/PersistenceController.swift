@@ -5,11 +5,6 @@ import OSLog
 /// Builds the Core Data stack. `shared` uses `NSPersistentCloudKitContainer`;
 /// `inMemory` uses an ephemeral store with no CloudKit, which is the headless
 /// test and preview double (ADR-0013).
-///
-/// The gift-claim partition (ADR-0006) is enforced by the model (a claim
-/// references its item by UUID, never by relationship) and by the visibility rule
-/// on `AppNameStore`. The physical CloudKit zone/share separation that excludes the
-/// wishlist owner is a follow-up; for now a single store carries every entity.
 @MainActor
 final class PersistenceController {
     let container: NSPersistentCloudKitContainer

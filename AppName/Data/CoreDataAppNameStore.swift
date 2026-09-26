@@ -70,33 +70,6 @@ final class CoreDataAppNameStore: AppNameStore {
         try context.save()
     }
 
-    // MARK: Gift claims (partitioned)
-
-    @discardableResult
-    func setClaim(itemID: UUID, by participant: String, status: ClaimStatus) throws -> GiftClaim {
-        let mo = try fetchClaim(itemID: itemID, participant: participant) ?? GiftClaimMO(context: context)
-        if mo.id == nil { mo.id = UUID() }
-        mo.itemID = itemID
-        mo.claimedBy = participant
-        mo.statusRaw = status.rawValue
-        mo.claimedAt = Date()
-        try context.save()
-        return Self.map(mo)
-    }
-
-    func removeClaim(itemID: UUID, by participant: String) throws {
-        guard let mo = try fetchClaim(itemID: itemID, participant: participant) else { return }
-        context.delete(mo)
-        try context.save()
-    }
-
-    func claims(forItem itemID: UUID) throws -> [GiftClaim] {
-        let request = NSFetchRequest<GiftClaimMO>(entityName: AppNameModel.Entity.giftClaim)
-        request.predicate = NSPredicate(format: "itemID == %@", itemID as CVarArg)
-        request.sortDescriptors = [NSSortDescriptor(key: "claimedAt", ascending: true)]
-        return try context.fetch(request).map(Self.map)
-    }
-
     // MARK: Fetch helpers
 
     private func fetchWishlist(_ id: UUID) throws -> WishlistMO? {
@@ -105,11 +78,6 @@ final class CoreDataAppNameStore: AppNameStore {
 
     private func fetchItem(_ id: UUID) throws -> WishItemMO? {
         try first(WishItemMO.self, entity: AppNameModel.Entity.wishItem, where: NSPredicate(format: "id == %@", id as CVarArg))
-    }
-
-    private func fetchClaim(itemID: UUID, participant: String) throws -> GiftClaimMO? {
-        try first(GiftClaimMO.self, entity: AppNameModel.Entity.giftClaim,
-                  where: NSPredicate(format: "itemID == %@ AND claimedBy == %@", itemID as CVarArg, participant))
     }
 
     private func first<T: NSManagedObject>(_ type: T.Type, entity: String, where predicate: NSPredicate) throws -> T? {
@@ -132,14 +100,6 @@ final class CoreDataAppNameStore: AppNameStore {
                  note: mo.note,
                  url: mo.urlString.flatMap { URL(string: $0) },
                  createdAt: mo.createdAt ?? .distantPast)
-    }
-
-    private static func map(_ mo: GiftClaimMO) -> GiftClaim {
-        GiftClaim(id: mo.id ?? UUID(),
-                  itemID: mo.itemID ?? UUID(),
-                  claimedBy: mo.claimedBy ?? "",
-                  status: ClaimStatus(rawValue: mo.statusRaw) ?? .considering,
-                  claimedAt: mo.claimedAt ?? .distantPast)
     }
 }
 
@@ -178,7 +138,7 @@ extension CoreDataAppNameStore {
     }
 
     /// The `.shared`-scope persistent store that accepted shares land in (matched
-    /// by file name). The giver-only claims zone is a follow-up (ADR-0006).
+    /// by file name).
     private func sharedStore(_ container: NSPersistentCloudKitContainer) -> NSPersistentStore? {
         container.persistentStoreCoordinator.persistentStores.first {
             $0.url?.lastPathComponent == PersistenceController.sharedStoreFileName

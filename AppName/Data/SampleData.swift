@@ -9,10 +9,7 @@ enum SampleData {
         let store = CoreDataAppNameStore(context: context)
         let birthday = try store.createWishlist(title: "Mom's Birthday")
         try store.addItem(to: birthday.id, title: "Gardening gloves", note: "Size M", url: nil)
-        let cookbook = try store.addItem(to: birthday.id, title: "Cookbook", note: nil,
-                                         url: URL(string: "https://example.com/cookbook"))
-        // A giver has already claimed the cookbook. This lives in the Claims
-        // partition, so the wishlist owner never sees it (ADR-0006).
-        try store.setClaim(itemID: cookbook.id, by: "aunt-anna", status: .purchased)
+        try store.addItem(to: birthday.id, title: "Cookbook", note: nil,
+                          url: URL(string: "https://example.com/cookbook"))
     }
 }

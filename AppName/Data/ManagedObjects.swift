@@ -30,11 +30,3 @@ final class WishItemMO: NSManagedObject {
 
     var itemID: UUID { id ?? UUID() }
 }
-
-final class GiftClaimMO: NSManagedObject {
-    @NSManaged var id: UUID?
-    @NSManaged var itemID: UUID?
-    @NSManaged var claimedBy: String?
-    @NSManaged var statusRaw: Int16
-    @NSManaged var claimedAt: Date?
-}

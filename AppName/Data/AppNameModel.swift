@@ -7,17 +7,10 @@ import CoreData
 /// CloudKit compatibility (ADR-0005): every attribute is optional or has a
 /// default, every relationship is optional with an explicit inverse, and no
 /// relationship uses the Deny delete rule.
-///
-/// The gift-claim partition (ADR-0006) is enforced at the model level: a
-/// `GiftClaim` references its item by a loose `UUID`, never a relationship, so it
-/// never joins the item's shared object graph. The physical separation into a
-/// distinct CloudKit zone/share that excludes the wishlist owner is a follow-up
-/// (a follow-up); for now every entity lives in one store.
 enum AppNameModel {
     enum Entity {
         nonisolated static let wishlist = "Wishlist"
         nonisolated static let wishItem = "WishItem"
-        nonisolated static let giftClaim = "GiftClaim"
     }
 
     static func make() -> NSManagedObjectModel {
@@ -25,7 +18,6 @@ enum AppNameModel {
 
         let wishlist = entity(named: Entity.wishlist, class: WishlistMO.self)
         let wishItem = entity(named: Entity.wishItem, class: WishItemMO.self)
-        let giftClaim = entity(named: Entity.giftClaim, class: GiftClaimMO.self)
 
         wishlist.properties = [
             attribute("id", .UUIDAttributeType),
@@ -38,13 +30,6 @@ enum AppNameModel {
             attribute("note", .stringAttributeType),
             attribute("urlString", .stringAttributeType),
             attribute("createdAt", .dateAttributeType),
-        ]
-        giftClaim.properties = [
-            attribute("id", .UUIDAttributeType),
-            attribute("itemID", .UUIDAttributeType),
-            attribute("claimedBy", .stringAttributeType, defaultValue: ""),
-            attribute("statusRaw", .integer16AttributeType, defaultValue: 0),
-            attribute("claimedAt", .dateAttributeType),
         ]
 
         // Wishlist <->> WishItem: optional both ends, explicit inverse, cascade
@@ -70,10 +55,7 @@ enum AppNameModel {
         wishlist.properties.append(items)
         wishItem.properties.append(listRef)
 
-        // GiftClaim has no relationship to WishItem: it references the item by a
-        // loose UUID, which is what keeps it out of the item's shared graph.
-
-        model.entities = [wishlist, wishItem, giftClaim]
+        model.entities = [wishlist, wishItem]
         return model
     }
 
