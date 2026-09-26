@@ -5,7 +5,6 @@ import CloudKit
 /// Sendable domain structs so callers never see Core Data. It operates on a
 /// single context: the view context for the app, an in-memory context for tests
 /// and previews (ADR-0013).
-@MainActor
 final class CoreDataAppNameStore: AppNameStore {
     private let context: NSManagedObjectContext
     private let container: NSPersistentCloudKitContainer?
@@ -141,11 +140,7 @@ extension CoreDataAppNameStore {
         guard let container, let store = sharedStore(container) else {
             throw AppNameStoreError.cloudKitUnavailable
         }
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            container.acceptShareInvitations(from: [metadata], into: store) { _, error in
-                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
-            }
-        }
+        _ = try await container.acceptShareInvitations(from: [metadata], into: store)
     }
 
     /// The `.shared`-scope persistent store that accepted shares land in (matched
