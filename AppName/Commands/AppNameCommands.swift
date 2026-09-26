@@ -8,14 +8,14 @@ struct AppNameCommands: Commands {
     let environment: AppEnvironment
 
     var body: some Commands {
-        // A "New" entry next to the system New Item slot, with the conventional
-        // shortcut. The action goes through the store port, so the command is
+        // A "New" entry next to the system New Item slot. Shift-Command-N, because
+        // Command-N is the system's New Window. The action goes through the store port, so the command is
         // independent of any particular screen.
         CommandGroup(after: .newItem) {
             Button("New List") {
                 environment.write("create a list") { try $0.createWishlist(title: "New List") }
             }
-            .keyboardShortcut("n", modifiers: .command)
+            .keyboardShortcut("n", modifiers: [.command, .shift])
         }
 
         // A manual sync/account re-check, useful when the user has just signed in
