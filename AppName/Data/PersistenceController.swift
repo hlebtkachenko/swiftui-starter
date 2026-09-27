@@ -17,8 +17,9 @@ final class PersistenceController {
     /// runs the app as a pure local store, which is the template default so a
     /// fresh clone launches without any iCloud setup.
     ///
-    /// To turn sync on: create the container in the Apple Developer portal, set
-    /// its identifier in `AppName.entitlements`, then set this to
+    /// To turn sync on: with automatic signing and a team set, add the container
+    /// in Xcode (Signing & Capabilities -> iCloud -> CloudKit), which registers
+    /// it and matches `AppName.entitlements`, then set this to
     /// that identifier (for example `"iCloud.<BUNDLE_ID_PREFIX>.appname"`). It must stay
     /// `nil` until the container exists, because activating CloudKit against an
     /// unprovisioned container hard-crashes on launch (an uncatchable trap on

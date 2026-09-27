@@ -12,6 +12,11 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 - `swift format` configuration (`.swift-format`) and format/lint commands in AGENTS.md; `#Preview` for `SettingsView` and `SyncStatusChip`.
 
 ### Changed
+- ADR-0005 amended: synced schema changes are additive only once the CloudKit schema is in Production; the view context's merge policy is pinned by unit tests.
+
+## [1.0.0] - 2026-09-27
+
+### Changed
 - **Breaking:** the deployment floor is now OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. Apps that must run on OS 26 should stay on 0.2.x. ADR-0001 and ADR-0002 are amended; ADR-0008 and ADR-0010 note that the OS 27 APIs they mention are now within the floor.
 - CodeQL is no longer a required PR check: its Swift tracer cannot build with the arm64-only Xcode 27 helpers on GitHub's runner. It runs weekly and on demand as a probe, and its first green run opens a PR that restores the gate.
 - Agent setup follows one file: `AGENTS.md` holds the agent instructions and the `CLAUDE.md` symlink is removed. `ARCHITECTURE.md` maps the code. ADR-0015 is amended accordingly.
@@ -19,7 +24,6 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 - The family wishlist example is replaced by a generic shared-collection example: `Folder` and `Item` Core Data entities (identity by object ID, `createdAt` as sort key, cascade delete), a system-component UI (split view, empty states, `ShareLink`), and no seed or sample data. `-seedProbe` now creates a folder. Old development stores from the previous model do not open; reinstall.
 - The store is one concrete `AppNameStore` class; the store protocol, value structs, and mapping layer are gone. ADR-0005, 0006, 0007, 0013, and 0016 are amended to drop the family framing.
-- ADR-0005 amended: synced schema changes are additive only once the CloudKit schema is in Production; the view context's merge policy is pinned by unit tests.
 
 ### Performance
 - The folder detail view looks up the folder's CloudKit share once per folder and after each finished sync, instead of on every view update.
