@@ -6,6 +6,8 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-27
+
 ### Changed
 - **Breaking:** the deployment floor is now OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. Apps that must run on OS 26 should stay on 0.2.x. ADR-0001 and ADR-0002 are amended; ADR-0008 and ADR-0010 note that the OS 27 APIs they mention are now within the floor.
 - CodeQL is no longer a required PR check: its Swift tracer cannot build with the arm64-only Xcode 27 helpers on GitHub's runner. It runs weekly and on demand as a probe, and its first green run opens a PR that restores the gate.
