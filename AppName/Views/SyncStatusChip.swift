@@ -47,3 +47,13 @@ struct SyncStatusChip: View {
         }
     }
 }
+
+#Preview {
+    HStack {
+        SyncStatusChip(state: .syncing)
+        SyncStatusChip(state: .offline)
+        SyncStatusChip(state: .accountUnavailable(reason: "Sign in to iCloud to sync."))
+        SyncStatusChip(state: .error(message: "Sync failed. Tap to retry."))
+    }
+    .padding()
+}
