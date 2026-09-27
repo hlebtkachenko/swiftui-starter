@@ -16,11 +16,10 @@ Swift and Apple-platform conventions, plus reusable recipes distilled from Apple
 
 - Priority order when goals conflict: no data loss, then no crashes, then no other bugs, then performance, then developer convenience.
 - Classes are `final` unless designed for subclassing.
-- One primary type per file, named after the type; small private helper types and per-platform variants of the same role (for example the iOS and macOS `AppDelegate`) may share its file.
+- One primary type, or one tight cluster of types for one concern, per file, named after the type or concern; per-platform variants of the same role (for example the iOS and macOS `AppDelegate`) may share it.
 - Every SwiftUI view file ships a `#Preview`, backed by the in-memory store where it needs data.
-- Keep `init` of `@Observable` types and `@State` defaults free of side effects (SwiftUI may evaluate a `@State` default more than once); start work in an explicit `start()` or `.task`.
+- Keep `init` of `@Observable` types and `@State` defaults free of side effects (SwiftUI may evaluate a `@State` default more than once), except a subscription that must exist before the first window (the `AppEnvironment` sync subscription); start other work in an explicit `start()` or `.task`.
 - Keep `#if os(...)` out of view bodies: isolate platform differences in a small helper type or modifier, one per concern.
-- One native multiplatform target (iOS and macOS SDKs); never Mac Catalyst.
 - SwiftUI first; wrap UIKit/AppKit with `UIViewRepresentable`/`NSViewRepresentable` only where SwiftUI is measured too slow or lacks a required behavior, and note why at the call site.
 - UI tests find elements by `accessibilityIdentifier`, never by visible or localized text; keep identifiers as constants in one place when the first UI test needs them.
 - Formatting: see the `swift format` command in AGENTS.md.
@@ -33,7 +32,7 @@ Swift and Apple-platform conventions, plus reusable recipes distilled from Apple
 
 ## Project structure and modularization
 
-- One multiplatform target for iPhone, iPad, and Mac (Food Truck confirms a single target, not per-platform targets).
+- One native multiplatform target for iPhone, iPad, and Mac (iOS and macOS SDKs; Food Truck confirms a single target, not per-platform targets); never Mac Catalyst.
 - When modularization is warranted (see [ADR-0015](adr/0015-project-structure-agent-ergonomics.md)), use the Data/UI package split that Backyard Birds and Food Truck use: a `AppNameData` local package (the `NSManagedObject` subclasses, the `NSPersistentCloudKitContainer` stack, `CKShare` helpers, fetch-request factories, and value-type snapshots, with no SwiftUI import) and a `AppNameUI` package (reusable views that take entities as plain arguments). The app target, any future widget, and the Swift Testing suites all depend on both; UI depends on Data, never the reverse. Local packages declare the OS 27 floor and the Swift 6 language mode.
 - Keep domain assets (named colors, custom SF Symbols, images) in the owning package's own `Assets.xcassets` and expose them as typed `Image` / `Color` members loaded with `bundle: .module`, instead of string literals at the call site.
 - Co-locate String Catalogs (`.xcstrings`) per feature and address them with `bundle: .module`.

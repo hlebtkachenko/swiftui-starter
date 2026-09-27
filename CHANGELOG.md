@@ -8,7 +8,6 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ### Added
 - House rules in `docs/patterns.md`: priority order for conflicting goals, `final` classes, one primary type per file, a `#Preview` per SwiftUI view, no side effects in `init`, and no Mac Catalyst.
-- ADR-0005 amended: once the CloudKit schema reaches Production, schema changes are additive only, and conflict resolution is pinned by a unit test.
 - Localization conventions in `docs/patterns.md`: String Catalogs from the first screen, translator comments, plural variations, and leading/trailing layout.
 - `swift format` configuration (`.swift-format`) and format/lint commands in AGENTS.md; `#Preview` for `SettingsView` and `SyncStatusChip`.
 
@@ -20,6 +19,7 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 - The family wishlist example is replaced by a generic shared-collection example: `Folder` and `Item` Core Data entities (identity by object ID, `createdAt` as sort key, cascade delete), a system-component UI (split view, empty states, `ShareLink`), and no seed or sample data. `-seedProbe` now creates a folder. Old development stores from the previous model do not open; reinstall.
 - The store is one concrete `AppNameStore` class; the store protocol, value structs, and mapping layer are gone. ADR-0005, 0006, 0007, 0013, and 0016 are amended to drop the family framing.
+- ADR-0005 amended: synced schema changes are additive only once the CloudKit schema is in Production; the view context's merge policy is pinned by unit tests.
 
 ### Performance
 - The folder detail view looks up the folder's CloudKit share once per folder and after each finished sync, instead of on every view update.

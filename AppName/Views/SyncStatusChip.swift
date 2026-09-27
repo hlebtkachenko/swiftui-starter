@@ -53,7 +53,7 @@ struct SyncStatusChip: View {
         SyncStatusChip(state: .syncing)
         SyncStatusChip(state: .offline)
         SyncStatusChip(state: .accountUnavailable(reason: "Sign in to iCloud to sync."))
-        SyncStatusChip(state: .error(message: "Sync failed. Tap to retry."))
+        SyncStatusChip(state: .error(message: "Sync hit a problem and will retry."))
     }
     .padding()
 }

@@ -33,7 +33,7 @@ Each row is an ADR in `docs/adr/` (0001-0017); revisit any that does not fit you
 
 - Xcode project `AppName.xcodeproj`: the `AppName` app, `AppNameTests` (Swift Testing), `AppNameUITests`; signing team in a gitignored `Secrets.xcconfig` wired via `Shared.xcconfig`.
 - App spine (`AppName/Core`, `AppName/Commands`, `AppName/Views`) and the Folder / Item example (`AppName/Data`, `AppName/Sharing`, `ContentView.swift`), described in `ARCHITECTURE.md`.
-- Swift Testing cases for the store (create, sort, cascade delete, save rollback), the model's CloudKit rules, sharing on an in-memory store, and sync state and display precedence.
+- Swift Testing cases for the store (create, sort, cascade delete, save rollback, merge policy), the model's CloudKit rules, sharing on an in-memory store, and sync state and display precedence.
 - CI gates: gitleaks, guard, pr-check, build (macOS tests + iOS Simulator build), release-check; codeql runs weekly as an Xcode 27 probe until it can gate again; the `main` ruleset as code (`docs/ci-cd.md`).
 
 ## Known gaps
@@ -42,3 +42,4 @@ Each row is an ADR in `docs/adr/` (0001-0017); revisit any that does not fit you
 - No App Group container ships; decide per app before the first external build (ADR-0005).
 - Deploy the CloudKit schema Development -> Production before the first external-TestFlight/production build (ADR-0014).
 - No app icon ships with the template.
+- No String Catalog ships yet; spine status strings (`SyncState.label`, `SyncErrorMapper`) are plain `String`, not localized.
