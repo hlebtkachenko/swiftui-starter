@@ -80,8 +80,8 @@ struct AppNameStoreTests {
         let viewContext = controller.container.viewContext
         let folder = try store.createFolder(title: "Mine")
 
-        // Make the local edit first, without saving, so the peer's save below
-        // finds an unsaved conflicting change to merge against.
+        // Make the local edit first, without saving, so the view context's
+        // save meets a stale snapshot.
         folder.title = "Local"
 
         let peer = makePeerContext(for: controller)
@@ -89,9 +89,9 @@ struct AppNameStoreTests {
         peerFolder.title = "Remote"
         try peer.save()
 
-        // Property-object-trump keeps the view context's own in-memory value
-        // through the automatic merge from the peer's save.
-        #expect(folder.title == "Local")
+        // The automatic merge is queued, not applied, so the save below meets a
+        // real conflict and goes through the merge policy.
+        #expect(folder.committedValues(forKeys: ["title"])["title"] as? String == "Mine")
 
         try viewContext.save()
 
@@ -114,6 +114,10 @@ struct AppNameStoreTests {
         let peerFolder = try #require(peer.object(with: folder.objectID) as? Folder)
         peerFolder.title = "Remote"
         try peer.save()
+
+        // The automatic merge is queued, not applied, so the save below meets a
+        // real conflict and goes through the merge policy.
+        #expect(folder.committedValues(forKeys: ["title"])["title"] as? String == "Mine")
 
         try viewContext.save()
 
