@@ -35,7 +35,7 @@ nonisolated enum AppNameModel {
         items.name = "items"
         items.destinationEntity = item
         items.minCount = 0
-        items.maxCount = 0 // 0 means to-many
+        items.maxCount = 0  // 0 means to-many
         items.isOptional = true
         items.deleteRule = .cascadeDeleteRule
 
@@ -43,7 +43,7 @@ nonisolated enum AppNameModel {
         owner.name = "folder"
         owner.destinationEntity = folder
         owner.minCount = 0
-        owner.maxCount = 1 // to-one
+        owner.maxCount = 1  // to-one
         owner.isOptional = true
         owner.deleteRule = .nullifyDeleteRule
 
@@ -68,7 +68,7 @@ nonisolated enum AppNameModel {
         let a = NSAttributeDescription()
         a.name = name
         a.attributeType = type
-        a.isOptional = true // optional at the model level for CloudKit; required in code
+        a.isOptional = true  // optional at the model level for CloudKit; required in code
         if let defaultValue { a.defaultValue = defaultValue }
         return a
     }

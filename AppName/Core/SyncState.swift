@@ -105,10 +105,10 @@ enum SyncErrorMapper {
         if ns.domain == CKErrorDomain {
             switch ns.code {
             case CKError.Code.networkUnavailable.rawValue,
-                 CKError.Code.networkFailure.rawValue,
-                 CKError.Code.serviceUnavailable.rawValue,
-                 CKError.Code.requestRateLimited.rawValue,
-                 CKError.Code.zoneBusy.rawValue:
+                CKError.Code.networkFailure.rawValue,
+                CKError.Code.serviceUnavailable.rawValue,
+                CKError.Code.requestRateLimited.rawValue,
+                CKError.Code.zoneBusy.rawValue:
                 return "A network problem interrupted sync. It will retry automatically."
             case CKError.Code.quotaExceeded.rawValue:
                 return "Your iCloud storage is full. Free up space to keep syncing."

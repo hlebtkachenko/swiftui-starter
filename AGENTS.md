@@ -21,6 +21,13 @@ xcodebuild test  -scheme AppName -destination 'platform=iOS Simulator,name=iPhon
 xcodebuild build -scheme AppName -destination 'platform=macOS'
 ```
 
+Format: the toolchain formatter, configured by `.swift-format`; run before committing Swift changes; not a CI gate.
+
+```bash
+swift format --in-place --recursive AppName AppNameTests AppNameUITests
+swift format lint --recursive AppName AppNameTests AppNameUITests
+```
+
 Local gate (mirrors the `guard` CI job), then the secret scan on staged files:
 
 ```bash

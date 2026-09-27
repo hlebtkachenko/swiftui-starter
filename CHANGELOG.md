@@ -10,6 +10,7 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 - House rules in `docs/patterns.md`: priority order for conflicting goals, `final` classes, one primary type per file, a `#Preview` per SwiftUI view, no side effects in `init`, and no Mac Catalyst.
 - ADR-0005 amended: once the CloudKit schema reaches Production, schema changes are additive only, and conflict resolution is pinned by a unit test.
 - Localization conventions in `docs/patterns.md`: String Catalogs from the first screen, translator comments, plural variations, and leading/trailing layout.
+- `swift format` configuration (`.swift-format`) and format/lint commands in AGENTS.md; `#Preview` for `SettingsView` and `SyncStatusChip`.
 
 ### Changed
 - **Breaking:** the deployment floor is now OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. Apps that must run on OS 26 should stay on 0.2.x. ADR-0001 and ADR-0002 are amended; ADR-0008 and ADR-0010 note that the OS 27 APIs they mention are now within the floor.

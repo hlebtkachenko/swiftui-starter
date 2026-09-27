@@ -100,7 +100,8 @@ final class AppEnvironment {
 
     /// The single status to show in chrome (see `SyncState.display`).
     var displayState: SyncState {
-        SyncState.display(account: connectivity.account, isOnline: connectivity.isOnline,
-                          sync: sync.state, storeError: sync.storeLoadError)
+        SyncState.display(
+            account: connectivity.account, isOnline: connectivity.isOnline,
+            sync: sync.state, storeError: sync.storeLoadError)
     }
 }
