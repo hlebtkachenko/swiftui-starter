@@ -6,6 +6,11 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ## [Unreleased]
 
+### Added
+- House rules in `docs/patterns.md`: priority order for conflicting goals, `final` classes, one primary type per file, a `#Preview` per SwiftUI view, no side effects in `init`, and no Mac Catalyst.
+- ADR-0005 amended: once the CloudKit schema reaches Production, schema changes are additive only, and conflict resolution is pinned by a unit test.
+- Localization conventions in `docs/patterns.md`: String Catalogs from the first screen, translator comments, plural variations, and leading/trailing layout.
+
 ### Changed
 - **Breaking:** the deployment floor is now OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27. Apps that must run on OS 26 should stay on 0.2.x. ADR-0001 and ADR-0002 are amended; ADR-0008 and ADR-0010 note that the OS 27 APIs they mention are now within the floor.
 - CodeQL is no longer a required PR check: its Swift tracer cannot build with the arm64-only Xcode 27 helpers on GitHub's runner. It runs weekly and on demand as a probe, and its first green run opens a PR that restores the gate.
