@@ -34,7 +34,8 @@ import CloudKit
 
     @Test func concurrentPhasesStaySyncingUntilAllFinish() {
         let monitor = SyncMonitor()
-        let setup = UUID(), export = UUID()
+        let setup = UUID()
+        let export = UUID()
         monitor.ingest(CloudSyncEvent(id: setup, kind: .setup, inProgress: true))
         monitor.ingest(CloudSyncEvent(id: export, kind: .export, inProgress: true))
         monitor.ingest(CloudSyncEvent(id: setup, kind: .setup, inProgress: false))
@@ -56,7 +57,7 @@ import CloudKit
         let monitor = SyncMonitor()
         let error = NSError(domain: "test", code: 1, userInfo: [NSLocalizedDescriptionKey: "load failed"])
         monitor.report(storeLoadError: error)
-        if case .error = monitor.state { } else { Issue.record("expected error state") }
+        if case .error = monitor.state {} else { Issue.record("expected error state") }
     }
 
     // MARK: Error mapping
@@ -99,8 +100,10 @@ import CloudKit
         (.available, false, .syncing, nil, .offline),
         (.noAccount, false, .idle, "disk full", .error(message: "disk full")),
     ])
-    func displayStatePrecedence(account: AccountState, isOnline: Bool, sync: SyncState,
-                                storeError: String?, expected: SyncState) {
+    func displayStatePrecedence(
+        account: AccountState, isOnline: Bool, sync: SyncState,
+        storeError: String?, expected: SyncState
+    ) {
         #expect(SyncState.display(account: account, isOnline: isOnline, sync: sync, storeError: storeError) == expected)
     }
 
@@ -115,7 +118,8 @@ import CloudKit
 
     @Test func twoEventsOfTheSameKindStaySyncingUntilBothFinish() {
         let monitor = SyncMonitor()
-        let privateStore = UUID(), sharedStore = UUID()
+        let privateStore = UUID()
+        let sharedStore = UUID()
         monitor.ingest(CloudSyncEvent(id: privateStore, kind: .importData, inProgress: true))
         monitor.ingest(CloudSyncEvent(id: sharedStore, kind: .importData, inProgress: true))
         monitor.ingest(CloudSyncEvent(id: privateStore, kind: .importData, inProgress: false))

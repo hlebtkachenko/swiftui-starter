@@ -6,6 +6,14 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ## [Unreleased]
 
+### Added
+- House rules in `docs/patterns.md`: priority order for conflicting goals, `final` classes, one primary type per file, a `#Preview` per SwiftUI view, no side effects in `init`, and no Mac Catalyst.
+- Localization conventions in `docs/patterns.md`: String Catalogs from the first screen, translator comments, plural variations, and leading/trailing layout.
+- `swift format` configuration (`.swift-format`) and format/lint commands in AGENTS.md; `#Preview` for `SettingsView` and `SyncStatusChip`.
+
+### Changed
+- ADR-0005 amended: synced schema changes are additive only once the CloudKit schema is in Production; the view context's merge policy is pinned by unit tests.
+
 ## [1.0.0] - 2026-09-27
 
 ### Changed

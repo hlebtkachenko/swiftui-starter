@@ -75,8 +75,10 @@ final class AppNameStore {
     func shareItem(for folder: Folder) throws -> CloudShareItem? {
         guard let identifier = PersistenceController.cloudKitContainerIdentifier else { return nil }
         let folderID = folder.objectID
-        return CloudShareItem(container: CKContainer(identifier: identifier),
-                              existing: try existingShare(for: folder)) { [self] in
+        return CloudShareItem(
+            container: CKContainer(identifier: identifier),
+            existing: try existingShare(for: folder)
+        ) { [self] in
             try await share(folderID)
         }
     }

@@ -63,7 +63,7 @@ Views read Core Data directly through `@FetchRequest` (`Folder.sortedFetchReques
 
 - **Core Data (SQLite, on device):** the source of truth. The template model is a generic shared collection: `Folder` (title, createdAt, to-many `items`, cascade) and `Item` (title, createdAt, to-one `folder`, nullify). No `id` attribute: identity is `NSManagedObjectID`; `createdAt` is set in `awakeFromInsert()` and is the sort key. The template ships no seed or sample data.
 - **CloudKit (optional sync transport):** `PersistenceController.cloudKitContainerIdentifier` is `nil` in the template, so no CloudKit options are set and the app runs locally. With an identifier, the container pairs a `.private`-scope store with a `.shared`-scope store; a `CKShare` covers one folder and its items.
-- **In-memory store:** `PersistenceController(inMemory: true)` (a `/dev/null` store, no CloudKit) backs the logic tests and the `#Preview`.
+- **In-memory store:** `PersistenceController(inMemory: true)` (a `/dev/null` store, no CloudKit) backs the logic tests and the previews.
 
 ## 5. External integrations
 

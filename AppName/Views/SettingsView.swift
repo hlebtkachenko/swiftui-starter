@@ -24,4 +24,9 @@ struct SettingsView: View {
         return date.formatted(date: .abbreviated, time: .shortened)
     }
 }
+
+#Preview {
+    SettingsView()
+        .environment(AppEnvironment(persistence: PersistenceController(inMemory: true)))
+}
 #endif

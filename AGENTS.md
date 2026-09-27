@@ -21,6 +21,13 @@ xcodebuild test  -scheme AppName -destination 'platform=iOS Simulator,name=iPhon
 xcodebuild build -scheme AppName -destination 'platform=macOS'
 ```
 
+Format: the toolchain formatter, configured by `.swift-format`; run before committing Swift changes; not a CI gate.
+
+```bash
+swift format --in-place --recursive AppName AppNameTests AppNameUITests
+swift format lint --recursive AppName AppNameTests AppNameUITests
+```
+
 Local gate (mirrors the `guard` CI job), then the secret scan on staged files:
 
 ```bash
@@ -41,6 +48,7 @@ Enable the pre-commit hook once per clone: `git config core.hooksPath .githooks`
 - Gate edits on `store.canEdit(_:)`: share participants may be read-only.
 - `Shared.xcconfig` sets `SWIFT_TREAT_WARNINGS_AS_ERRORS` and `GCC_TREAT_WARNINGS_AS_ERRORS`, so any new warning fails the build.
 - Docs: each topic has one home, mapped in [docs/README.md](docs/README.md). `check-duplication.sh` fails on any line of 45+ characters repeated verbatim across Markdown files, and `check-ownership-map.sh` fails when a new `.md` file is missing from the map.
+- House rules (priority order, `final`, one type per file, `#Preview` per view, no side effects in `init`, no Mac Catalyst): [docs/patterns.md](docs/patterns.md#house-rules).
 - Accepted ADRs change only by a dated amendment or a superseding record ([docs/adr/README.md](docs/adr/README.md)).
 - Required merge checks: gitleaks, guard, pr-check (Conventional Commits title + description), and `Build and test` from `build.yml` (macOS unit tests + iOS Simulator build; skipped on PRs without Swift or project changes). CodeQL (~17 min macOS build) is suspended as a gate until its tracer works with Xcode 27; it probes weekly and opens a restore PR itself. Detail and the release steps: [docs/ci-cd.md](docs/ci-cd.md).
 - Update `STATE.md` and `CHANGELOG.md` (`## [Unreleased]`) when a change affects them.

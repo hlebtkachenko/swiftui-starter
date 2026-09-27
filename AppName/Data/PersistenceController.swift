@@ -66,10 +66,12 @@ final class PersistenceController {
                 // supported sharing setup — unlike the configuration-scoped split that
                 // crashed v0.1.4.
                 guard let sharedDescription = description.copy() as? NSPersistentStoreDescription,
-                      let privateURL = description.url else {
+                    let privateURL = description.url
+                else {
                     fatalError("Could not derive the shared store description")
                 }
-                sharedDescription.url = privateURL
+                sharedDescription.url =
+                    privateURL
                     .deletingLastPathComponent()
                     .appendingPathComponent(Self.sharedStoreFileName)
                 let sharedOptions = NSPersistentCloudKitContainerOptions(containerIdentifier: identifier)
@@ -97,7 +99,8 @@ final class PersistenceController {
         // Opt-in per launch (`-initializeCloudKitSchema YES`): it is slow and needs
         // a signed-in account. Deploy to Production from the CloudKit console.
         if !inMemory, Self.cloudKitContainerIdentifier != nil,
-           UserDefaults.standard.bool(forKey: "initializeCloudKitSchema") {
+            UserDefaults.standard.bool(forKey: "initializeCloudKitSchema")
+        {
             do {
                 try container.initializeCloudKitSchema()
             } catch {
