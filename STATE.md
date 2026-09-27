@@ -5,7 +5,7 @@ Snapshot of what exists. Code layout lives in `ARCHITECTURE.md`, agent instructi
 This is a **template** (`AppName` is a placeholder). Once you start a real app from it ([docs/using-the-template.md](docs/using-the-template.md)), rewrite this file to describe that app's state.
 
 - **Platform:** minimum OS 27 (iOS / iPadOS / macOS 27), built with Xcode 27; Liquid Glass only.
-- **Version:** 0.2.1 released; the OS 27 floor and the agent-tooling changes are unreleased (see `CHANGELOG.md`).
+- **Version:** 1.0.0 released (OS 27 floor, generic example, agent tooling; see `CHANGELOG.md`).
 
 ## Stack
 
