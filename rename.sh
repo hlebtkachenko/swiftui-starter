@@ -32,16 +32,17 @@ git grep -lzI -e AppName -e appName -e appname -- . ':!rename.sh' |
 
 # 2. Paths: rename the outermost tracked path component that still holds
 # AppName, then look again, until none is left.
-while path="$(git ls-files | grep -m1 AppName)"; do
+while path="$(grep -m1 AppName <<< "$(git ls-files)")"; do
   prefix="$(awk -F/ '{ p = ""; for (i = 1; i <= NF; i++) { p = (i > 1 ? p "/" : "") $i; if ($i ~ /AppName/) { print p; exit } } }' <<< "$path")"
   base="$(basename "$prefix")"
   git mv "$prefix" "$(dirname "$prefix")/${base//AppName/$new}"
 done
 
 # 3. Nothing may be left behind.
-if git grep -qI -e AppName -e appName -e appname -- . ':!rename.sh'; then
+if git grep -qI -e AppName -e appName -e appname -- . ':!rename.sh' || grep -q AppName <<< "$(git ls-files)"; then
   echo "Placeholders remain:" >&2
-  git grep -nI -e AppName -e appName -e appname -- . ':!rename.sh' >&2
+  git grep -nI -e AppName -e appName -e appname -- . ':!rename.sh' >&2 || true
+  git ls-files | grep AppName >&2 || true
   exit 1
 fi
 

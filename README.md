@@ -37,7 +37,7 @@ cd myapp
 | **Design** | System Liquid Glass via standard SwiftUI components (split view, toolbars, lists, empty states); never imitated with blurs or gradients, and no back-deployment below 27 |
 | **Data** | Core Data with `NSPersistentCloudKitContainer`: private and shared stores, one `CKShare` per folder. Sync is off until you provision a container, so a fresh copy runs on a local store |
 | **Dependencies** | Zero third-party packages; first-party frameworks only |
-| **Tests** | 29 Swift Testing tests for logic on an in-memory store; XCTest only for UI (one launch test) |
+| **Tests** | 29 Swift Testing tests for logic (store tests on an in-memory store); XCTest only for UI (one launch test) |
 | **CI** | gitleaks, guard, pr-check, and a macOS test plus iOS Simulator build on GitHub Actions; green with no repository secrets. CodeQL is suspended as a gate until it supports Xcode 27. Releases are tagged `vX.Y.Z` ([docs/ci-cd.md](docs/ci-cd.md)) |
 | **For agents** | `AGENTS.md`, `ARCHITECTURE.md`, 17 Architecture Decision Records, `llms.txt` |
 | **License** | [MIT](LICENSE) |
@@ -68,7 +68,7 @@ Build and test:
 
 ```bash
 xcodebuild build -scheme MyApp -destination 'platform=iOS Simulator,name=iPhone 17'
-xcodebuild test -scheme MyApp -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
+xcodebuild test -scheme MyApp -destination 'platform=macOS' -only-testing:MyAppTests CODE_SIGNING_ALLOWED=NO
 ```
 
 Then set your signing team and bundle ID prefix, protect `main`, and replace the example: [docs/using-the-template.md](docs/using-the-template.md).
@@ -86,7 +86,7 @@ Then set your signing team and bundle ID prefix, protect `main`, and replace the
 
 ## FAQ
 
-**Do I need an Apple Developer account?** Not to build, test, or run in the Simulator. You need one for devices, TestFlight, the App Store, and CloudKit.
+**Do I need an Apple Developer account?** Not to build or test: the iOS Simulator build works without a team, and the unit tests run with `CODE_SIGNING_ALLOWED=NO`. You need one for devices, TestFlight, the App Store, and CloudKit.
 
 **Does it work without iCloud?** Yes. CloudKit is off by default and the app runs on a local Core Data store. Turn sync on when you are ready (guide, step 6).
 
