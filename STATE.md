@@ -33,7 +33,8 @@ Each row is an ADR in `docs/adr/` (0001-0017); revisit any that does not fit you
 
 - Xcode project `AppName.xcodeproj`: the `AppName` app, `AppNameTests` (Swift Testing), `AppNameUITests`; signing team in a gitignored `Secrets.xcconfig` wired via `Shared.xcconfig`.
 - App spine (`AppName/Core`, `AppName/Commands`, `AppName/Views`) and the Folder / Item example (`AppName/Data`, `AppName/Sharing`, `ContentView.swift`), described in `ARCHITECTURE.md`.
-- Swift Testing cases for the store (create, sort, cascade delete, save rollback, merge policy), the model's CloudKit rules, sharing on an in-memory store, and sync state and display precedence.
+- Debug builds take `-demoContent` to fill an empty store with four named folders and their items; Release builds ship no seed data.
+- Swift Testing cases for the store (create, sort, cascade delete, save rollback, merge policy), the model's CloudKit rules, sharing on an in-memory store, and sync state and display precedence, and the debug-only `-demoContent` seed.
 - CI gates: gitleaks, guard, pr-check, build (macOS tests + iOS Simulator build), release-check; codeql runs weekly as an Xcode 27 probe until it can gate again; the `main` ruleset as code (`docs/ci-cd.md`).
 
 ## Known gaps

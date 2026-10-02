@@ -47,6 +47,7 @@ final class AppEnvironment {
         receiveMetrics()
         #if DEBUG
         seedSyncProbeIfRequested()
+        seedDemoContentIfRequested()
         #endif
     }
 
@@ -95,6 +96,16 @@ final class AppEnvironment {
         guard let title = UserDefaults.standard.string(forKey: "seedProbe"), !title.isEmpty else { return }
         Log.app.notice("seeding sync probe folder: \(title, privacy: .public)")
         write("seed the sync probe") { try $0.createFolder(title: title) }
+    }
+
+    /// When the app is launched with `-demoContent`, fill an empty store with a
+    /// few named folders and items for screenshots and manual testing. A bare
+    /// flag, so it is read from the arguments, not `UserDefaults` (which needs a
+    /// value). Compiled out of Release builds.
+    private func seedDemoContentIfRequested() {
+        guard ProcessInfo.processInfo.arguments.contains("-demoContent") else { return }
+        Log.app.notice("seeding demo content into an empty store")
+        write("seed demo content") { try $0.seedDemoContentIfEmpty() }
     }
     #endif
 

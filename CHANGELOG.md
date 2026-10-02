@@ -7,6 +7,7 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 ## [Unreleased]
 
 ### Added
+- Debug-only `-demoContent` launch argument: fills an empty store with four named folders (Groceries, Trip to Lisbon, Reading List, Home Projects) and their items, for screenshots and manual testing. Idempotent (an existing store is left alone) and compiled out of Release, like `-seedProbe`; unit-tested on the in-memory store.
 - House rules in `docs/patterns.md`: priority order for conflicting goals, `final` classes, one primary type per file, a `#Preview` per SwiftUI view, no side effects in `init`, and no Mac Catalyst.
 - Localization conventions in `docs/patterns.md`: String Catalogs from the first screen, translator comments, plural variations, and leading/trailing layout.
 - `swift format` configuration (`.swift-format`) and format/lint commands in AGENTS.md; `#Preview` for `SettingsView` and `SyncStatusChip`.

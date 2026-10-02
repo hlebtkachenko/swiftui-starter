@@ -1,6 +1,6 @@
 # AGENTS.md
 
-SwiftUI starter template for native multiplatform apps (iPhone, iPad, Mac), App Store and TestFlight shaped. `AppName` is a placeholder renamed per app ([docs/using-the-template.md](docs/using-the-template.md)). A domain-agnostic spine plus a generic shared-collection example (Folder / Item) that exercises CloudKit + `CKShare`, with no seed data; replace the example with the app's own model. Code map: [ARCHITECTURE.md](ARCHITECTURE.md). State: [STATE.md](STATE.md). Decisions: [docs/adr/](docs/adr/README.md).
+SwiftUI starter template for native multiplatform apps (iPhone, iPad, Mac), App Store and TestFlight shaped. `AppName` is a placeholder renamed per app ([docs/using-the-template.md](docs/using-the-template.md)). A domain-agnostic spine plus a generic shared-collection example (Folder / Item) that exercises CloudKit + `CKShare`, with no seed data outside the debug-only `-demoContent` flag; replace the example with the app's own model. Code map: [ARCHITECTURE.md](ARCHITECTURE.md). State: [STATE.md](STATE.md). Decisions: [docs/adr/](docs/adr/README.md).
 
 Public repo, proprietary license: every file and CI log is world-readable.
 
