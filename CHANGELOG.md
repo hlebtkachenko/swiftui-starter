@@ -6,6 +6,8 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-02
+
 ### Added
 - `rename.sh`: `./rename.sh MyApp` renames the `AppName` placeholder in file contents (text files only), file names and folders, validates the name, refuses a dirty tree or a second run, and fails if a placeholder is left. A `Rename smoke test` job in `build.yml` runs it on a scratch checkout and builds the result for macOS. `docs/using-the-template.md` uses it and keeps the manual steps as a fallback.
 - README rewritten for discovery: badges, quick start, light and dark screenshots (`docs/images/`), comparison, FAQ.
