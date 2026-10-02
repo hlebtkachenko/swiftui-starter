@@ -1,6 +1,6 @@
 # Security policy
 
-AppName is proprietary (see `LICENSE`). This file is the **vulnerability-reporting policy only**. Engineering rules for secrets, privacy, and the scanning guards live in [`docs/security.md`](docs/security.md).
+AppName is open source under the MIT license (see `LICENSE`). This file is the **vulnerability-reporting policy only**. Engineering rules for secrets, privacy, and the scanning guards live in [`docs/security.md`](docs/security.md).
 
 ## Reporting a vulnerability
 
@@ -10,7 +10,7 @@ Include a description and impact, steps to reproduce or a proof of concept, and 
 
 ## Supported versions
 
-The project is pre-release; no versions are published yet. This section will list supported versions once releases begin.
+Only the latest release is supported.
 
 ## Scope
 

@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a change to the template itself.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or missing when you start an app from the template?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: The change you would make.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Other ways you considered, including doing it in your own app instead.
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Template rules
+      options:
+        - label: This fits the zero-dependency, system-only rules (first-party frameworks, system Liquid Glass, OS 27 floor).
+          required: true

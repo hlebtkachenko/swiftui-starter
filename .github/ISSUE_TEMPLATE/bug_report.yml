@@ -1,0 +1,57 @@
+name: Bug report
+description: Something in the template does not build, run, or behave as documented.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: xcode
+    attributes:
+      label: Xcode version
+      placeholder: "Xcode 27.0 (27A266a)"
+    validations:
+      required: true
+  - type: input
+    id: destination
+    attributes:
+      label: Destination
+      description: Device or simulator and its OS version.
+      placeholder: "iPhone 17 Pro Simulator, iOS 27.0"
+    validations:
+      required: true
+  - type: input
+    id: template-version
+    attributes:
+      label: Template version
+      description: The release tag or commit you started from.
+      placeholder: "v1.0.0"
+    validations:
+      required: true
+  - type: checkboxes
+    id: renamed
+    attributes:
+      label: Rename
+      options:
+        - label: I renamed AppName (with rename.sh or by hand) before this happened.
+  - type: dropdown
+    id: cloudkit
+    attributes:
+      label: CloudKit on?
+      description: Is `cloudKitContainerIdentifier` set to a provisioned container?
+      options:
+        - "No, local store (template default)"
+        - "Yes, sync is on"
+        - "Not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Build output or Console logs. Remove personal data, team IDs, and bundle ID prefixes you do not want public.
+      render: text

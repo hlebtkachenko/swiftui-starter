@@ -42,6 +42,11 @@ final class AppNameStore {
         try save()
     }
 
+    /// How many folders the store holds.
+    func folderCount() throws -> Int {
+        try context.count(for: Folder.sortedFetchRequest())
+    }
+
     /// Save, or roll back the unsaved changes and rethrow, so a failed write never
     /// lingers in the context to be retried by an unrelated later save.
     private func save() throws {
