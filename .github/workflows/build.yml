@@ -32,7 +32,7 @@ jobs:
     outputs:
       changed: ${{ steps.check.outputs.changed }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2 # HEAD^1 of the PR merge commit must be present
       - id: check
@@ -62,7 +62,7 @@ jobs:
     # Return to `macos-latest` once it gains Xcode 27.
     runs-on: xcode-27
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Select Xcode 27
         run: |
           # Use the image default Xcode 27 (the image also carries 27.x betas).
@@ -99,7 +99,7 @@ jobs:
     if: ${{ !cancelled() && needs.changes.outputs.changed != 'false' }}
     runs-on: xcode-27
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Select Xcode 27
         run: |
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
