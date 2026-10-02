@@ -32,6 +32,9 @@ AppNameUITests/             # XCTest launch test
 docs/                       # ADRs, CI/CD, security, patterns, template guide (map: docs/README.md)
 .github/                    # workflows, guard scripts, main ruleset, CODEOWNERS
 .githooks/pre-commit        # local large-file + gitleaks check
+rename.sh                   # one-shot AppName -> YourApp rename (CI smoke-tests it)
+llms.txt                    # short index for language models
+docs/images/                # README screenshots (delete in your app)
 .conductor/settings.toml    # Conductor workspace setup (CodeGraph index, Secrets.xcconfig copy)
 .mcp.json                   # project-scoped CodeGraph MCP server
 ```

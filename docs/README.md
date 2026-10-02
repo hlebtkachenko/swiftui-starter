@@ -10,6 +10,10 @@ Single source of truth: **each topic lives in exactly one file.** Other files li
 | Change history | [`../CHANGELOG.md`](../CHANGELOG.md) |
 | License | [`../LICENSE`](../LICENSE) |
 | Vulnerability-reporting policy | [`../SECURITY.md`](../SECURITY.md) |
+| How to contribute: issues first, checks, changelog | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) |
+| Community standards (Contributor Covenant) | [`../CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) |
+| Public overview, screenshots, FAQ | [`../README.md`](../README.md) |
+| Short index for language models | [`../llms.txt`](../llms.txt) |
 | Secrets, personal data, privacy, guard internals, denylist | [security.md](security.md) |
 | CI gates, the `main` ruleset, versioning, release process | [ci-cd.md](ci-cd.md) |
 | How to start a new app from this template | [using-the-template.md](using-the-template.md) |
