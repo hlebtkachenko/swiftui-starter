@@ -22,6 +22,7 @@ AppName/
 ├── Data/                   # example model + persistence
 │   ├── AppNameStore.swift          # the store: writes, save with rollback, canEdit, CKShare calls
 │   ├── AppNameModel.swift          # programmatic NSManagedObjectModel (no .xcdatamodeld)
+│   ├── DemoContent.swift           # debug-only -demoContent seed (four folders with items)
 │   ├── ManagedObjects.swift        # Folder / Item NSManagedObject subclasses + sorted fetch requests
 │   └── PersistenceController.swift # NSPersistentCloudKitContainer, in-memory variant
 ├── Sharing/CloudSharing.swift  # CloudShareItem (Transferable for ShareLink), share-acceptance delegates
@@ -31,6 +32,9 @@ AppNameUITests/             # XCTest launch test
 docs/                       # ADRs, CI/CD, security, patterns, template guide (map: docs/README.md)
 .github/                    # workflows, guard scripts, main ruleset, CODEOWNERS
 .githooks/pre-commit        # local large-file + gitleaks check
+rename.sh                   # one-shot AppName -> YourApp rename (CI smoke-tests it)
+llms.txt                    # short index for language models
+docs/images/                # README screenshots (delete in your app)
 .conductor/settings.toml    # Conductor workspace setup (CodeGraph index, Secrets.xcconfig copy)
 .mcp.json                   # project-scoped CodeGraph MCP server
 ```
@@ -56,12 +60,12 @@ Views read Core Data directly through `@FetchRequest` (`Folder.sortedFetchReques
 - `AppNameApp` builds one `AppEnvironment(persistence: .shared)`, injects it and the view context into every scene, and calls `environment.start()` (guarded, runs once) from the first scene's `.task`.
 - `AppEnvironment.displayState` composes store-load error, account, network and sync into the one status the chrome shows; a store-load error wins, then account problems and offline, then sync progress.
 - The example UI uses system components only: folder sidebar and item list with swipe and context-menu delete, `ContentUnavailableView` empty states, a `ShareLink` shown only when sync is on, edits disabled when `store.canEdit(_:)` is false (read-only share participant). Strings go through `String(localized:)`.
-- Debug builds accept `-seedProbe <title>` at launch to insert one folder, used to check cross-device sync by hand, and `-initializeCloudKitSchema YES` to push the Core Data schema to the CloudKit Development environment.
+- Debug builds accept `-seedProbe <title>` at launch to insert one folder, used to check cross-device sync by hand; `-demoContent` to fill an empty store with four named folders and their items (`Data/DemoContent.swift`, used for the README screenshots); and `-initializeCloudKitSchema YES` to push the Core Data schema to the CloudKit Development environment.
 - Sharing entry points are platform-specific: on iOS the `SceneDelegate` receives `CKShare.Metadata` (cold and warm launch); on macOS the `NSApplicationDelegate` does. `Info.plist` declares `CKSharingSupported`.
 
 ## 4. Data stores
 
-- **Core Data (SQLite, on device):** the source of truth. The template model is a generic shared collection: `Folder` (title, createdAt, to-many `items`, cascade) and `Item` (title, createdAt, to-one `folder`, nullify). No `id` attribute: identity is `NSManagedObjectID`; `createdAt` is set in `awakeFromInsert()` and is the sort key. The template ships no seed or sample data.
+- **Core Data (SQLite, on device):** the source of truth. The template model is a generic shared collection: `Folder` (title, createdAt, to-many `items`, cascade) and `Item` (title, createdAt, to-one `folder`, nullify). No `id` attribute: identity is `NSManagedObjectID`; `createdAt` is set in `awakeFromInsert()` and is the sort key. Release builds ship no seed or sample data; debug builds seed demo content only on `-demoContent` and only into an empty store.
 - **CloudKit (optional sync transport):** `PersistenceController.cloudKitContainerIdentifier` is `nil` in the template, so no CloudKit options are set and the app runs locally. With an identifier, the container pairs a `.private`-scope store with a `.shared`-scope store; a `CKShare` covers one folder and its items.
 - **In-memory store:** `PersistenceController(inMemory: true)` (a `/dev/null` store, no CloudKit) backs the logic tests and the previews.
 
@@ -85,7 +89,7 @@ Apple frameworks only, no third-party packages: CloudKit and `CKShare`, Network,
 ## 8. Development and testing
 
 - Setup and rename: [docs/using-the-template.md](docs/using-the-template.md). Commands and the local gate: [AGENTS.md](AGENTS.md).
-- Tests: Swift Testing in `AppNameTests` (folder/item create, sort and cascade delete, save rollback, the model's CloudKit rules, sharing unavailable on the in-memory store, sync state and display precedence); one XCTest launch test in `AppNameUITests`. CloudKit sharing is verified only on signed builds with real iCloud accounts.
+- Tests: Swift Testing in `AppNameTests` (folder/item create, sort and cascade delete, save rollback, the model's CloudKit rules, sharing unavailable on the in-memory store, sync state and display precedence, the debug-only demo seed); one XCTest launch test in `AppNameUITests`. CloudKit sharing is verified only on signed builds with real iCloud accounts.
 - Agent tooling: CodeGraph indexes the Swift sources into a gitignored `.codegraph/`; it is not part of the app.
 
 ## 9. Known gaps

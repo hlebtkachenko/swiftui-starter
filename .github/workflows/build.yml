@@ -4,6 +4,7 @@ name: build
 # (see codeql.yml), and Xcode Cloud builds only for signing and TestFlight.
 # `Build and test` runs the unit tests on macOS and compiles the iOS app and
 # test bundles for the simulator (build-for-testing, no simulator boot).
+# `Rename smoke test` runs rename.sh on its checkout and builds the result.
 #
 # Cost: macOS minutes are free on public repos; a private copy of the template
 # bills them at 10x the Linux rate. A cheap Ubuntu `changes` job skips the macOS
@@ -43,7 +44,7 @@ jobs:
           # is exactly the PR's changes. --no-renames lists both sides of a move.
           # If the diff fails, build anyway rather than risk a false green.
           files=$(git diff --no-renames --name-only HEAD^1 HEAD) || { echo "changed=true" >> "$GITHUB_OUTPUT"; exit 0; }
-          if printf '%s\n' "$files" | grep -Eq '^(AppName/|AppName[^/]*Tests/|[^/]+\.xcodeproj/|(.*/)?[^/]+\.xcconfig$|\.github/workflows/build\.yml$)'; then
+          if printf '%s\n' "$files" | grep -Eq '^(AppName/|AppName[^/]*Tests/|[^/]+\.xcodeproj/|(.*/)?[^/]+\.xcconfig$|\.github/workflows/build\.yml$|rename\.sh$)'; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -89,5 +90,30 @@ jobs:
           xcodebuild build-for-testing \
             -scheme AppName \
             -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+
+  rename:
+    name: Rename smoke test
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.changed != 'false' }}
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v6
+      - name: Select Xcode 27
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version | grep -q '^Xcode 27\.' || { echo "Xcode 27 not found on this runner"; exit 1; }
+      - name: Rename to Demo and build for macOS
+        run: |
+          # The placeholder is split so rename.sh leaves this check intact: a
+          # copy that is already renamed, or has dropped rename.sh, skips.
+          if [ ! -f rename.sh ] || [ ! -d "App""Name.xcodeproj" ]; then
+            echo "Already renamed; nothing to test."; exit 0
+          fi
+          ./rename.sh Demo
+          xcodebuild build \
+            -scheme Demo \
+            -destination 'platform=macOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO

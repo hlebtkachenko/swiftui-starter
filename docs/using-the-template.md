@@ -4,13 +4,7 @@ How to start a new app from this template. `AppName` is the placeholder; you rep
 
 ## 1. Get a copy
 
-If the template repository is marked as a GitHub template (one-time, on the source repo):
-
-```
-gh api -X PATCH repos/hlebtkachenko/swiftui-starter -F is_template=true
-```
-
-then create each new app from it:
+Create each new app from the template:
 
 ```
 gh repo create myapp --private --template hlebtkachenko/swiftui-starter --clone
@@ -18,16 +12,27 @@ cd myapp
 git config core.hooksPath .githooks
 ```
 
-Without the template flag: create an empty repo (`gh repo create myapp --private`), clone the starter, remove its `.git`, run `git init`, and point the remote at the new repo. Either way you start with fresh history.
+Or click **Use this template** on GitHub. Either way you start with fresh history.
 
 ## 2. Rename `AppName` to your app
 
-From the repo root, set `NEW` (your app's name) and `LOWER` (its lowercase form, used in the bundle ID, the iCloud container, and the support domain):
+From the repo root, on a clean working tree:
 
 ```
-NEW=Myapp
+./rename.sh MyApp
+```
+
+The script replaces `AppName` with the name you give, `appName` with its lower-camel form, and `appname` with its lowercase form (used in the bundle ID, the iCloud container, and the support domain) in every tracked text file, then renames the tracked files and folders. It refuses a name that is not letters and digits starting with an uppercase letter, refuses a dirty tree, refuses a copy that is already renamed, and fails if any placeholder is left. Review with `git status`, undo with `git reset --hard`. The steps below use `NEW` for the name and `LOWER` for its lowercase form.
+
+The `appname` -> `myapp` pass turns the bundle ID into `$(BUNDLE_ID_PREFIX).myapp` and the container into `iCloud.$(BUNDLE_ID_PREFIX).myapp`. The log subsystem follows the bundle ID at run time.
+
+Manual fallback, if you cannot run the script (`-I` skips binary files such as the PNGs in `docs/images/`):
+
+```
+NEW=MyApp
 LOWER=myapp
-git ls-files -z | xargs -0 perl -i -pe "s/AppName/${NEW}/g; s/appname/${LOWER}/g"
+CAMEL=myApp
+git grep -lzI -e AppName -e appName -e appname -- . ':!rename.sh' | xargs -0 perl -i -pe "s/AppName/${NEW}/g; s/appName/${CAMEL}/g; s/appname/${LOWER}/g"
 git mv AppName.xcodeproj ${NEW}.xcodeproj
 git mv AppName ${NEW}
 git mv AppNameTests ${NEW}Tests
@@ -40,8 +45,6 @@ git mv ${NEW}/Data/AppNameStore.swift ${NEW}/Data/${NEW}Store.swift
 git mv ${NEW}Tests/AppNameTests.swift ${NEW}Tests/${NEW}Tests.swift
 git mv ${NEW}UITests/AppNameUITestsLaunchTests.swift ${NEW}UITests/${NEW}UITestsLaunchTests.swift
 ```
-
-The `appname` -> `myapp` pass turns the bundle ID into `$(BUNDLE_ID_PREFIX).myapp` and the container into `iCloud.$(BUNDLE_ID_PREFIX).myapp`. The log subsystem follows the bundle ID at run time.
 
 ## 3. Signing and bundle ID prefix
 
@@ -83,5 +86,6 @@ See [ci-cd.md](ci-cd.md) for what the ruleset enforces. CI passes with no reposi
 ## 6. Make it yours
 
 - Replace the Folder / Item example in `${NEW}/Data` (model, store) and `${NEW}/ContentView.swift` with your own model and views. The app spine in `${NEW}/Core` is domain-agnostic; keep it.
-- Rewrite `README.md`, `STATE.md`, and `CHANGELOG.md` for your app. Revisit any ADR in `docs/adr/` that does not fit, and update the record.
+- Delete the template's showcase files: `docs/images/`, `llms.txt`, `rename.sh`, and the `rename` job in `.github/workflows/build.yml`. Replace `README.md` with your app's own, and rewrite `STATE.md` and `CHANGELOG.md` for your app.
+- Replace `LICENSE` with your own license; the template's MIT license names the template's author, not you. Revisit any ADR in `docs/adr/` that does not fit, and update the record.
 - CloudKit is **off** by default (`cloudKitContainerIdentifier` is `nil`, so the app runs as a local store). To enable sync: with automatic signing and `DEVELOPMENT_TEAM` set, add the container in Xcode (Signing & Capabilities -> iCloud -> CloudKit), which registers it; make sure its identifier matches `com.apple.developer.icloud-container-identifiers` in `${NEW}.entitlements` (it is `iCloud.$(BUNDLE_ID_PREFIX).${LOWER}`, expanded at build time), then set `cloudKitContainerIdentifier` in `PersistenceController.swift` to it. `Info.plist` needs no change. Deploy the CloudKit schema Development -> Production before the first external-TestFlight or production build (ADR-0014).

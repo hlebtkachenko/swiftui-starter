@@ -162,6 +162,35 @@ struct SharingTests {
     }
 }
 
+#if DEBUG
+/// The debug-only `-demoContent` seed (compiled out of Release, like the app code).
+@MainActor
+struct DemoContentTests {
+    @Test func seedsAnEmptyStore() throws {
+        let context = PersistenceController(inMemory: true).container.viewContext
+        let store = AppNameStore(context: context)
+        #expect(try store.seedDemoContentIfEmpty())
+        let folders = try context.fetch(Folder.sortedFetchRequest())
+        #expect(folders.compactMap(\.title) == AppNameStore.demoContent.map(\.folder))
+        let firstItems = try context.fetch(Item.sortedFetchRequest(in: try #require(folders.first)))
+        #expect(firstItems.compactMap(\.title) == AppNameStore.demoContent.first?.items)
+    }
+
+    @Test func leavesANonEmptyStoreAlone() throws {
+        let context = PersistenceController(inMemory: true).container.viewContext
+        let store = AppNameStore(context: context)
+        try store.seedDemoContentIfEmpty()
+        #expect(try store.seedDemoContentIfEmpty() == false)
+        #expect(try store.folderCount() == AppNameStore.demoContent.count)
+
+        let other = AppNameStore(context: PersistenceController(inMemory: true).container.viewContext)
+        try other.createFolder(title: "Mine")
+        #expect(try other.seedDemoContentIfEmpty() == false)
+        #expect(try other.folderCount() == 1)
+    }
+}
+#endif
+
 /// A context whose save fails with an ordinary error, to exercise rollback.
 /// Swift requires restating the `@unchecked Sendable` it inherits from the SDK.
 nonisolated private final class FailingSaveContext: NSManagedObjectContext, @unchecked Sendable {

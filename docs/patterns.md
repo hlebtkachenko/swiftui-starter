@@ -49,7 +49,7 @@ Swift and Apple-platform conventions, plus reusable recipes distilled from Apple
 Supports the in-memory test double in [ADR-0013](adr/0013-testing-strategy.md): previews and logic tests share one in-memory store instead of repeating setup.
 
 - Build previews and tests on `PersistenceController(inMemory: true)` (a `/dev/null` store URL, no CloudKit) and create the objects they need through `AppNameStore`, so they exercise the same write path as the app.
-- Ship no seed or sample data in the template; an app that wants demo content adds it itself.
+- Ship no seed or sample data in Release builds. Demo content for screenshots lives behind the debug-only `-demoContent` launch argument (`AppName/Data/DemoContent.swift`), writes through `AppNameStore`, and seeds only an empty store.
 
 ## Sign in with Apple
 

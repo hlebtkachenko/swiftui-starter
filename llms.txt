@@ -1,0 +1,34 @@
+# SwiftUI Starter
+
+> A GitHub template for native SwiftUI apps on iPhone, iPad and Mac (OS 27+) with Swift 6, system Liquid Glass, Core Data with CloudKit sync and CKShare sharing, and zero third-party dependencies.
+
+Key facts:
+
+- Deployment floor: iOS, iPadOS and macOS 27, built with Xcode 27; one multiplatform target. Apps that need OS 26 use v0.2.x.
+- Stack: Swift 6 language mode, MainActor default isolation, warnings as errors, SwiftUI with Observation, Swift Testing (XCTest only for UI tests).
+- Data: Core Data with NSPersistentCloudKitContainer, private and shared stores, CKShare per folder. CloudKit sync is off by default (`PersistenceController.cloudKitContainerIdentifier` is nil), so a fresh copy runs on a local store.
+- Zero third-party dependencies; first-party frameworks only.
+- `AppName` is the placeholder name. Create: `gh repo create myapp --private --template hlebtkachenko/swiftui-starter --clone`. Rename: `./rename.sh MyApp`. Build: `xcodebuild build -scheme MyApp -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO`.
+- Debug builds accept `-demoContent` to fill an empty store with sample folders.
+- License: MIT.
+
+## Docs
+
+- [README](https://github.com/hlebtkachenko/swiftui-starter/blob/main/README.md): overview, quick start, FAQ
+- [AGENTS.md](https://github.com/hlebtkachenko/swiftui-starter/blob/main/AGENTS.md): agent instructions, commands, local gate, gotchas
+- [ARCHITECTURE.md](https://github.com/hlebtkachenko/swiftui-starter/blob/main/ARCHITECTURE.md): code layout and data flow
+- [Using the template](https://github.com/hlebtkachenko/swiftui-starter/blob/main/docs/using-the-template.md): start a new app step by step
+- [ADR index](https://github.com/hlebtkachenko/swiftui-starter/blob/main/docs/adr/README.md): the 17 founding decisions
+- [Patterns](https://github.com/hlebtkachenko/swiftui-starter/blob/main/docs/patterns.md): house rules and Swift conventions
+- [CI/CD](https://github.com/hlebtkachenko/swiftui-starter/blob/main/docs/ci-cd.md): checks, ruleset, releases
+- [STATE.md](https://github.com/hlebtkachenko/swiftui-starter/blob/main/STATE.md): what exists today
+
+## Source
+
+- [App entry point](https://github.com/hlebtkachenko/swiftui-starter/blob/main/AppName/AppNameApp.swift)
+- [Composition root](https://github.com/hlebtkachenko/swiftui-starter/blob/main/AppName/Core/AppEnvironment.swift)
+- [Store (all writes, CKShare)](https://github.com/hlebtkachenko/swiftui-starter/blob/main/AppName/Data/AppNameStore.swift)
+- [Persistence and CloudKit setup](https://github.com/hlebtkachenko/swiftui-starter/blob/main/AppName/Data/PersistenceController.swift)
+- [Example UI](https://github.com/hlebtkachenko/swiftui-starter/blob/main/AppName/ContentView.swift)
+- [Tests](https://github.com/hlebtkachenko/swiftui-starter/blob/main/AppNameTests/AppNameTests.swift)
+- [rename.sh](https://github.com/hlebtkachenko/swiftui-starter/blob/main/rename.sh)
