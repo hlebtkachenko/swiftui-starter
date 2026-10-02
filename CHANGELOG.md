@@ -13,6 +13,7 @@ Release tags use `vX.Y.Z`; the rules and release steps are in [docs/ci-cd.md](do
 - `swift format` configuration (`.swift-format`) and format/lint commands in AGENTS.md; `#Preview` for `SettingsView` and `SyncStatusChip`.
 
 ### Changed
+- **License:** the template is now MIT-licensed (was proprietary, all rights reserved). `SECURITY.md` supports only the latest release.
 - ADR-0005 amended: synced schema changes are additive only once the CloudKit schema is in Production; the view context's merge policy is pinned by unit tests.
 
 ## [1.0.0] - 2026-09-27
